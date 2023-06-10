@@ -1,39 +1,58 @@
 import PySimpleGUI as sg
 import sys
-import tempfile
+import os
+from src.home import Home
 from src.createLogin import CreateLogin
 from src.configuration.jsonManagement import ReadSettings, JsonPath
-from src.configuration.utils import encryptString, decryptString, KEY, savedLogin
+from src.configuration.utils import encryptString, decryptString, KEY, savedLogin, ttk_style, tmd1
 
 def Login():
-    Layout = [[sg.Text('PsychoPass Login')],
-              [sg.Text('Username'), sg.Input(key='-USERNAME-')],
-              [sg.Text('Password'), sg.Input(key='-PASSWORD-')],
-              [sg.Button('Login'), sg.Button('Create Login')]]
-    Window = sg.Window('PsychoPass Login', Layout)
+    sg.theme('LightBlue2')
+
+    layout = [
+        [sg.Text('PsychoPass Login', size=(20, 1), font=('Helvetica', 20), justification='center')],
+        [sg.Text('Username:', size=(12, 1), font=('Helvetica', 12)), 
+         sg.Input(key='-USERNAME-', size=(20, 1), font=('Helvetica', 12))],
+        [sg.Text('Password:', size=(12, 1), font=('Helvetica', 12)), 
+         sg.Input(key='-PASSWORD-', size=(20, 1), font=('Helvetica', 12), password_char='*')],
+        [sg.Button('Login', size=(10, 1), font=('Helvetica', 12)), 
+         sg.Button('Create Login', size=(10, 1), font=('Helvetica', 12))]
+    ]
+
+    window = sg.Window('PsychoPass Login', layout, element_justification='center', margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style)
+
     while True:
-        event, values = Window.Read()
+        event, values = window.read()
         if event == 'Login':
-            key = KEY()
-            GivenName = values['-USERNAME-']
-            SavedName = ReadSettings('Username', JsonPath)
-            GivenPass = values['-PASSWORD-']
-            SavedPass = savedLogin()
-            SavedPass = decryptString(SavedPass, key)
-            if GivenPass == SavedPass:
-                break
+            createdAcc = ReadSettings('LoginMade', JsonPath)
+            if createdAcc is True:
+                given_name = values['-USERNAME-']
+                given_pass = values['-PASSWORD-']
+                key = KEY()
+                saved_name = ReadSettings('Username', JsonPath)
+                saved_pass = savedLogin()
+                saved_pass = decryptString(saved_pass, key)
+                if given_name == saved_name and given_pass == saved_pass:
+                    window.close()
+                    Home(key)
+                    sg.popup('Either key is missing or is invalid')
+
+                else:
+                    sg.popup('Incorrect login')
             else:
-                sg.popup('Incorrect Login')
-        if event == "Create Login":
-            LoginMade = ReadSettings('LoginMade', JsonPath)
-            if LoginMade is True:
+                sg.popup('Please Create Login First')
+        if event == 'Create Login':
+            login_made = ReadSettings('LoginMade', JsonPath)
+            if login_made is True:
                 sg.popup('Login Already Created')
-            elif LoginMade is False:
-                Window.hide()
+            elif login_made is False:
+                window.hide()
                 CreateLogin()
-                Window.un_hide()
+                window.un_hide()
             else:
                 break
-        if event == sg.WIN_CLOSED:
+
+        if event == sg.WINDOW_CLOSED:
             sys.exit()
-    Window.close()
+
+    window.close()
