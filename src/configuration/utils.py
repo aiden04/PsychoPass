@@ -56,18 +56,18 @@ def savedLogin():
 
 def list(file_path):
     key = KEY()
-    decrypted_lines = []  # List to store decrypted lines
+    decrypted_lines = []
 
     try:
-        with open(file_path, 'rb') as file:  # Open the file in binary mode
-            data = file.read().decode()  # Read and decode the data
+        with open(file_path, 'rb') as file:
+            data = file.read().decode()
 
-        lines = data.splitlines()  # Split the data into lines
+        lines = data.splitlines()
 
         for line in lines:
-            decrypted_line = decryptString(line.strip(), key)  # Decrypt each line
-            decrypted_line = decrypted_line.strip("\n[]'")  # Remove unwanted characters
-            decrypted_lines.append(decrypted_line)  # Store the decrypted line in the list
+            decrypted_line = decryptString(line.strip(), key)
+            decrypted_line = decrypted_line.strip("\n[]'")
+            decrypted_lines.append(decrypted_line)
 
     except FileNotFoundError:
         return None
@@ -87,9 +87,9 @@ def writingTMD(username, email, password, website, key):
 def cleanUpOutputText(output_text):
     cleaned_lines = []
     for line in output_text:
-        line = line.strip("=\n ")  # Remove leading/trailing equal signs, newlines, and spaces
-        line = line.replace("Email:", "Email: ").replace("Username:", "Username: ")  # Add spaces after colons
-        line = line.replace("Password:", "Password: ").replace("Website:", "Website: ")  # Add spaces after colons
+        line = line.strip("=\n ")
+        line = line.replace("Email:", "Email: ").replace("Username:", "Username: ")
+        line = line.replace("Password:", "Password: ").replace("Website:", "Website: ")
         cleaned_lines.append(line)
-    cleaned_text = "\n".join(cleaned_lines)  # Join the cleaned lines with newlines
+    cleaned_text = "\n".join(cleaned_lines)
     return cleaned_text
