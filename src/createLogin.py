@@ -5,7 +5,6 @@ from src.configuration.jsonManagement import JsonPath, JsonQEdit, JsonQReplace
 
 def CreateLogin():
     if KEY == KEY:
-        sg.theme('LightGreen3')
 
         layout = [
             [sg.Text('PsychoPass Login Creation', size=(24, 1), font=('Helvetica', 20), justification='center')],

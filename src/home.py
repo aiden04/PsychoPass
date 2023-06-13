@@ -5,7 +5,6 @@ from src.configuration.utils import KEY, ttk_style, list, tmd2, writingTMD, clea
 from src.saving import Saving
 
 def Home(key):
-
     savedKey = KEY()
     if key == savedKey:
         data = list(tmd2)
@@ -22,7 +21,6 @@ def Home(key):
                 window.un_hide()
                 data = list(tmd2)
                 window['-MULTILINE-'].update(data)
-
             if event == 'Clear Passwords':
                 Output = clearTMD(tmd2)
                 sg.popup(Output)

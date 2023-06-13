@@ -1,15 +1,21 @@
 import PySimpleGUI as sg
 import sys
-from src.configuration.utils import KEY, encryptString, writingTMD, ttk_style
+from src.configuration.utils import writingTMD, ttk_style
+from src.generate import GenDef
 
 def Saving():
-    Layout = [[sg.Text("Save Passwords Here")],
-              [sg.Text('Username'), sg.Input(key='-USERNAME-')],
-              [sg.Text('Email'), sg.Input(key='-EMAIL-')],
-              [sg.Text('Password'), sg.Input(key='-PASSWORD-')],
-              [sg.Text('Website'), sg.Input(key='-WEBSITE-')],
-              [sg.Button('Save'), sg.Button('Generate'), sg.Button('Back')]]
-    window = sg.Window('Save Passwords Here', Layout, use_ttk_buttons=True, ttk_theme=ttk_style)
+
+    layout = [
+        [sg.Text("Save Passwords Here", font=('Helvetica', 16), justification='center')],
+        [sg.Text('Username', size=(12, 1)), sg.Input(key='-USERNAME-', size=(20, 1))],
+        [sg.Text('Email', size=(12, 1)), sg.Input(key='-EMAIL-', size=(20, 1))],
+        [sg.Text('Password', size=(12, 1)), sg.Input(key='-PASSWORD-', size=(20, 1))],
+        [sg.Text('Website', size=(12, 1)), sg.Input(key='-WEBSITE-', size=(20, 1))],
+        [sg.Button('Save', size=(10, 1)), sg.Button('Generate', size=(10, 1)), sg.Button('Back', size=(10, 1))]
+    ]
+
+    window = sg.Window('Save Passwords', layout, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
+
     while True:
         event, values = window.read()
         if event == 'Save':
@@ -17,10 +23,15 @@ def Saving():
             email = values['-EMAIL-']
             password = values['-PASSWORD-']
             website = values['-WEBSITE-']
-            writingTMD(email, username, password, website)
-        if event == 'Back':
+            saved = writingTMD(email, username, password, website)
+            sg.popup(saved, font=('Helvetica', 12), title='Save Result')
+        elif event == 'Generate':
+            window.hide()
+            GenDef()
+            window.un_hide()
+        elif event == 'Back':
             break
-        if event == sg.WIN_CLOSED:
+        elif event == sg.WIN_CLOSED:
             sys.exit()
+
     window.close()
-        
