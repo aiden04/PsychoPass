@@ -39,7 +39,7 @@ The PsychoPass program relies on the following dependencies:
 To run the PsychoPass program, follow these steps:
 ```batch
 git clone https://github.com/aiden04/PsychoPass.git
-cd psychopass-master
+cd psychopass
 pip install -r requirements.txt
 python Index.pyw
 ```
