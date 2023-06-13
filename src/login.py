@@ -31,7 +31,7 @@ def Login():
                 key = KEY()
                 saved_name = ReadSettings('Username', JsonPath)
                 saved_pass = savedLogin()
-                saved_pass = decryptString(saved_pass, key)
+                saved_pass = decryptString(saved_pass)
                 if given_name == saved_name and given_pass == saved_pass:
                     window.close()
                     Home(key)
