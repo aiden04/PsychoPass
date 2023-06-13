@@ -1,4 +1,5 @@
-# PsychoPass
+
+![logo-no-background](https://github.com/aiden04/PsychoPass/assets/9298623/c8139a9e-9eba-4d9a-b9ab-133785936861)
 
 The PsychoPass program is a password management tool designed to securely store and manage user passwords. It provides a user-friendly graphical user interface (GUI) for interacting with the program.
 
