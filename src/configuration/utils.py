@@ -69,11 +69,11 @@ def list(file_path):
         line_variables[variable_name] = line.strip().decode()
         line_variables[variable_name] = decryptString(line_variables[variable_name]).decode()
         decrypted_lines.append(line_variables[variable_name])
-    data = '\n    =======================================\n'.join(decrypted_lines)
+    data = '\n    ====================================================\n'.join(decrypted_lines)
     data = f'''
-    =======================================
+    ====================================================
         {data}
-    =======================================
+    ====================================================
 '''
     return data
     

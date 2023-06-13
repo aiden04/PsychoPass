@@ -48,12 +48,10 @@ def CheckTDMFiles():
     tmd1 = 'src/configuration/TMD1'
     tmd2 = 'src/configuration/TMD2'
     tmd3 = 'src/configuration/TMD3'
-    tmd4 = 'src/configuration/TMD4'
 
     tmd1Present = os.path.isfile(tmd1)
     tmd2Present = os.path.isfile(tmd2)
     tmd3Present = os.path.isfile(tmd3)
-    tmd4Present = os.path.isfile(tmd4)
 
     if not tmd1Present:
         with open(tmd1, 'w') as file:
@@ -63,9 +61,6 @@ def CheckTDMFiles():
             file.write('')
     if not tmd3Present:
         with open(tmd3, 'w') as file:
-            file.write('')
-    if not tmd4Present:
-        with open(tmd4, 'w') as file:
             file.write('')
 
 def JsonQEdit(Value, Content):

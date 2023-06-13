@@ -6,7 +6,7 @@ from src.createLogin import CreateLogin
 from src.configuration.jsonManagement import ReadSettings, JsonPath
 from src.configuration.utils import decryptString, KEY, savedLogin, ttk_style
 
-themes = ['bright', 'brown', 'red', 'orange', 'yellow', 'green', 'light', 'lightgrey', 'lightgreen', 'lightblue', 'SystemDefault']
+themes = ['LightBlue', 'DarkAmber', 'Tan', 'Black', 'SystemDefault']
 theme = random.choice(themes)
 
 def Login():
