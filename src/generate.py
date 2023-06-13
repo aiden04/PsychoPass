@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 import sys
-from src.configuration.utils import writingTMD, GenPass, ttk_style
+from src.configuration.utils import writingTMD, GenPass, ttk_style, icon
 
 def GenDef():
     password = GenPass()
@@ -17,7 +17,7 @@ def GenDef():
         [sg.Button('Save', size=(10, 1)), sg.Button('Regenerate', size=(10, 1)), sg.Button('Back', size=(10, 1))]
     ]
 
-    window = sg.Window('Generated Password', layout, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
+    window = sg.Window('Generated Password', layout, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
 
     while True:
         event, values = window.read()
@@ -26,7 +26,7 @@ def GenDef():
             email = values['-EMAIL-']
             website = values['-WEBSITE-']
             saved = writingTMD(email, username, password, website)
-            sg.popup(saved, font=('Helvetica', 12), title='Save Result')
+            sg.popup(saved, font=('Helvetica', 12), title='Save Result', icon=icon)
         elif event == 'Back':
             break
         elif event == 'Regenerate':

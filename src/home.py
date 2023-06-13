@@ -2,19 +2,22 @@ import PySimpleGUI as sg
 import sys
 import os
 from src.options import Options
-from src.configuration.utils import KEY, ttk_style, list, tmd2, writingTMD, clearTMD
+from src.configuration.utils import KEY, ttk_style, list, tmd2, writingTMD, clearTMD, icon
 from src.saving import Saving
+
+logo = './src/logo.png'
 
 def Home(key):
     savedKey = KEY()
     if key == savedKey:
         data = list(tmd2)
         layout = [
+            [sg.Image(logo)],
             [sg.Text('PyschoPass Menu', font=('Helvetica', 16, 'bold'))],
             [sg.Multiline(data, size=(55, 15), key='-MULTILINE-', disabled=True, autoscroll=True, font=('Helvetica', 12))],
             [sg.Button('Save Passwords', size=(15, 1)), sg.Button('Options', size=(15, 1)), sg.Button('Clear Passwords', size=(15, 1)), sg.Button('Close', size=(15, 1))]
         ]
-        window = sg.Window('PsychoPass', layout, margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style, finalize=True)
+        window = sg.Window('PsychoPass', layout, icon=icon, margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style, finalize=True)
 
         while True:
             event, values = window.read()
@@ -26,7 +29,7 @@ def Home(key):
                 window['-MULTILINE-'].update(data)
             if event == 'Clear Passwords':
                 Output = clearTMD(tmd2)
-                sg.popup(Output)
+                sg.popup(Output, icon=icon)
                 data = ''
                 window['-MULTILINE-'].update(data)
             if event == 'Options':

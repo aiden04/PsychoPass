@@ -3,7 +3,7 @@ import sys
 import os
 from src.createLogin import CreateLogin
 from src.configuration.jsonManagement import ReadSettings, JsonPath
-from src.configuration.utils import tmd1, tmd2, tmd3, decryptString, savedLogin, clearTMD, ttk_style
+from src.configuration.utils import tmd1, tmd2, tmd3, decryptString, savedLogin, clearTMD, ttk_style, icon
 
 def verifyLogin():
     layout = [
@@ -12,7 +12,7 @@ def verifyLogin():
         [sg.Text('Password', font=('Helvetica')), sg.Input(key='-PASSWORD-', password_char='*')],
         [sg.Button('Verify', size=(15, 1), font=('Helvetica')), sg.Button('Back', size=(15, 1), font=('Helvetica'))]
     ]
-    window = sg.Window('Verify Login', layout, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style)
+    window = sg.Window('Verify Login', layout, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style, icon=icon)
 
     while True:
         event, values = window.read()
@@ -28,10 +28,10 @@ def verifyLogin():
                 clearTMD(tmd2)
                 window.hide()
                 CreateLogin()
-                sg.popup('Login Reset!')
+                sg.popup('Login Reset!', icon=icon)
                 break
             else:
-                sg.popup('Incorrect Login')
+                sg.popup('Incorrect Login', icon=icon)
 
         if event == 'Back':
             break
@@ -45,7 +45,7 @@ def Confirmation():
     layout = [[sg.Text('This will reset all data including login, passwords and encryption key.')],
               [sg.Text('Are you sure you want to continue?')],
               [sg.Button('Yes'), sg.Button('No')]]
-    window = sg.Window('Confirm', layout)
+    window = sg.Window('Confirm', layout, icon=icon)
     while True:
         event, values = window.read()
         if event == 'Yes':
@@ -53,7 +53,7 @@ def Confirmation():
             os.remove(tmd2)
             os.remove(tmd3)
             os.remove(JsonPath)
-            sg.popup('All data reset! PyschoPass will now close')
+            sg.popup('All data reset! PyschoPass will now close', icon=icon)
             sys.exit()
         if event == 'No':
             break
@@ -66,7 +66,7 @@ def Options():
         [sg.Text('Options', font=('Helvetica', 20))],
         [sg.Button('Reset Login', size=(15, 1), font=('Helvetica')), sg.Button('Reset Data', size=(15, 1), font=('Helvetica')), sg.Button('Back', size=(15, 1), font=('Helvetica'))]
     ]
-    window = sg.Window('Options', layout, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style)
+    window = sg.Window('Options', layout, icon=icon, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style)
 
     while True:
         event, values = window.read()

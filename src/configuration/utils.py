@@ -1,6 +1,5 @@
 import json
-import os, time
-import array
+import os
 import random
 import string
 from cryptography.fernet import Fernet
@@ -9,9 +8,15 @@ from src.configuration.jsonManagement import JsonPath
 tmd1 = './src/configuration/TMD1'
 tmd2 = './src/configuration/TMD2'
 tmd3 = './src/configuration/TMD3'
-tmd4 = './src/configuration/TMD4'
+
+icon = './src/icon.ico'
 
 ttk_style = 'clam'
+
+def Image(image_path):
+    with open(image_path, 'rb') as f:
+        data = f.read()
+        return data
 
 def keyCheck():
     with open(JsonPath) as JsonFile:
@@ -104,4 +109,3 @@ def GenPass():
     chars = string.ascii_letters + string.digits + string.punctuation
     password = ''.join(random.choice(chars) for _ in range(12))
     return password
-    

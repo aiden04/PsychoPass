@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 import sys
-from src.configuration.utils import KEY, encryptString, saveLogin, ttk_style
+from src.configuration.utils import KEY, encryptString, saveLogin, ttk_style, icon
 from src.configuration.jsonManagement import JsonPath, JsonQEdit, JsonQReplace
 
 def CreateLogin():
@@ -16,7 +16,7 @@ def CreateLogin():
             sg.Button('Back', size=(10, 1), font=('Helvetica', 12))]
         ]
 
-        window = sg.Window('PsychoPass Login Creation', layout, element_justification='center', margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style)
+        window = sg.Window('PsychoPass Login Creation', layout, icon=icon, element_justification='center', margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style)
 
         while True:
             event, values = window.read()
@@ -28,7 +28,7 @@ def CreateLogin():
                 saveLogin(password)
                 JsonQEdit('Username', username)
                 JsonQReplace('LoginMade', True)
-                sg.popup('Password Saved!')
+                sg.popup('Password Saved!', icon=icon)
 
             if event == 'Back':
                 break

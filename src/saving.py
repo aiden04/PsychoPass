@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 import sys
-from src.configuration.utils import writingTMD, ttk_style
+from src.configuration.utils import writingTMD, ttk_style, icon
 from src.generate import GenDef
 
 def Saving():
@@ -14,7 +14,7 @@ def Saving():
         [sg.Button('Save', size=(10, 1)), sg.Button('Generate', size=(10, 1)), sg.Button('Back', size=(10, 1))]
     ]
 
-    window = sg.Window('Save Passwords', layout, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
+    window = sg.Window('Save Passwords', layout, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
 
     while True:
         event, values = window.read()
@@ -24,7 +24,7 @@ def Saving():
             password = values['-PASSWORD-']
             website = values['-WEBSITE-']
             saved = writingTMD(email, username, password, website)
-            sg.popup(saved, font=('Helvetica', 12), title='Save Result')
+            sg.popup(saved, font=('Helvetica', 12), title='Save Result', icon=icon)
         elif event == 'Generate':
             window.hide()
             GenDef()
