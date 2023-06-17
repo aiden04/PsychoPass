@@ -23,17 +23,17 @@ The PsychoPass program relies on the following dependencies:
 
 ## Media
 ### Login
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/b1d7a129-c5eb-456f-a02e-0ce80b27ca4b)
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/3149863b-80a9-47fc-b31a-6b6da0b1c9bd)
 ### Login Creation
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/e277ec83-f75b-45e3-bd25-2ff78497db99)
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/4ac5cb2b-2f18-4eee-98e6-ccab189b2298)
 ### Main Menu
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/6cd9a493-54d8-46a5-8d58-0f1e1329e313)
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/5aabc121-b5d5-4f5b-9bd7-a88541df2e20)
 ### Password Saver
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/a1a847e7-e5c1-490b-9d40-98e30786ce7b)
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/7c690559-f5ce-4751-bb84-a8490701bae9)
 ### Password Generator
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/f053078a-1d4a-4f6e-8937-2415c5bc479e)
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/54e0824e-e1c6-447e-8ae0-657c14a32547)
 ### Options
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/1157eaca-2dbe-4a95-8b36-b24747ee2a29)
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/706fc951-ca52-4543-9d4d-fc67c5949256)
 
 ## Usage
 
