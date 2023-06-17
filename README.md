@@ -38,12 +38,8 @@ The PsychoPass program relies on the following dependencies:
 ## Usage
 
 To run the PsychoPass program, follow these steps:
-```batch
-git clone https://github.com/aiden04/PsychoPass.git
-cd psychopass
-pip install -r requirements.txt
-python Index.pyw
-```
+- Download `PsychoPassInstaller.exe` from releases and install PsychoPass.
+- Once installed, launch the shortcut on the desktop and your all ready!
 
 Please note that the program may require additional setup or configuration depending on your specific environment or use case.
 
