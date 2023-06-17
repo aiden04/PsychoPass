@@ -23,7 +23,7 @@ def Saving():
             email = values['-EMAIL-']
             password = values['-PASSWORD-']
             website = values['-WEBSITE-']
-            saved = writingTMD(email, username, password, website)
+            saved = writingTMD(username, email, password, website)
             sg.popup(saved, font=('Helvetica', 12), title='Save Result', icon=icon)
         elif event == 'Generate':
             window.hide()
