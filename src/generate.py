@@ -25,7 +25,7 @@ def GenDef():
             username = values['-USERNAME-']
             email = values['-EMAIL-']
             website = values['-WEBSITE-']
-            saved = writingTMD(email, username, password, website)
+            saved = writingTMD(username, email, password, website)
             sg.popup(saved, font=('Helvetica', 12), title='Save Result', icon=icon)
         elif event == 'Back':
             break
