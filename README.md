@@ -33,7 +33,7 @@ The PsychoPass program relies on the following dependencies:
 ### Password Generator
 ![image](https://github.com/aiden04/PsychoPass/assets/9298623/54e0824e-e1c6-447e-8ae0-657c14a32547)
 ### Options
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/706fc951-ca52-4543-9d4d-fc67c5949256)
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/d82f02b6-3677-414f-8a21-7be96fc9f22c)
 
 ## Usage
 
