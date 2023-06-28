@@ -35,6 +35,18 @@ The PsychoPass program relies on the following dependencies:
 ### Options
 ![image](https://github.com/aiden04/PsychoPass/assets/9298623/d82f02b6-3677-414f-8a21-7be96fc9f22c)
 
+## Build
+If you want to build this into an executable from the source code, follow instructions below:
+Open a new windows terminal where you want then enter these commands.
+```
+git clone https://github.com/aiden04/PsychoPass.git
+cd PsychoPass
+pip install -r requirements.txt
+pyinstaller --onefile --icon icon.ico fileImport.pyw
+pyinstaller --icon icon.ico Main.pyw
+```
+Once you've done the steps above, copy `icon.ico`, `logo.png`, and open the new `Dist` folder inside the root. You can paste the files in the `Dist` folder, then just move all files into the `Main` directory. And thats it, you've compiled PsychoPass.
+If you would want to go further and compile the installer for on click file support for `.pyp`, that you will need to download the [Inno Installer](https://jrsoftware.org/isdl.php). After you've installed inno, you can just right click the `PsychoPassInstaller.iss` and click compile. After that a the file will compile and create an installer.
 ## Usage
 
 To run the PsychoPass program, follow these steps:
