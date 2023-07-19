@@ -329,7 +329,7 @@ class PsychoPass:
             return None, None
     def Update(download_url):
         try:
-            with open(CurrentVersion) as f:
+            with open(CurrentVersion, 'w') as f:
                 f.truncate(0)
                 f.write('1.3.1')
             response = requests.get(download_url)
