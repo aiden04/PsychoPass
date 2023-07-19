@@ -688,7 +688,6 @@ class PsychoPass:
             [sg.Text('Password Strength:', size=(15, 1)), sg.Text('', size=(20, 1), key='-STRENGTH-')],
             [sg.Button('Create Account', size=(15, 1), font=('Helvetica', 12)), sg.Button('Back', size=(15, 1), font=('Helvetica', 12))]
         ]
-        multiline = window['-MULTILINE-'].Widget
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style)
         while True:
             event, values = window.read()
