@@ -5,14 +5,22 @@ import string
 import getpass
 import shutil
 import sys
+import pyotp
+import qrcode
+import datetime
 import PySimpleGUI as sg
+import requests
 from cryptography.fernet import Fernet
-
+from password_strength import PasswordStats
 appdata_path = os.path.join(os.environ['LOCALAPPDATA'], 'PsychoPass')
 os.makedirs(appdata_path, exist_ok=True)
 script_path = os.path.abspath(sys.argv[0])
+CurrentDate = datetime.date.today()
 root = os.path.dirname(script_path)
 user = getpass.getuser()
+RepoOwner = 'aiden04'
+RepoName = 'PsychoPass'
+CurrentVersion = f'{appdata_path}/CurrentVersion.txt'
 icon = f'{root}/icon.ico'
 logo = f'{root}/logo.png'
 JsonPath = f'{appdata_path}/settings.json'
@@ -20,11 +28,14 @@ tmd1 = f'{appdata_path}/TMD1.pyp'
 tmd2 = f'{appdata_path}/TMD2.pyp'
 tmd3 = f'{appdata_path}/TMD3.pyp'
 ttk_style = 'clam'
-
 class Json:
     def PreLaunch():
+        AutoLogin = Cryptography.Encrypt('False')
         JsonDefault = {
-            'Theme': 'SystemDefault'
+            'Theme': 'SystemDefault',
+            'CreationDate': str(CurrentDate),
+            'Auth': '',
+            'AutoLogin': AutoLogin.decode()
         }
         if os.path.exists(JsonPath):
             return
@@ -32,7 +43,6 @@ class Json:
             with open(JsonPath, 'w') as f:
                 json.dump(JsonDefault, f)
                 f.close()
-    
     def Read(Variable):
         try:
             with open(JsonPath, 'r') as f:
@@ -42,7 +52,6 @@ class Json:
         except FileNotFoundError:
             sg.popup('Settings File not found.', icon=icon, title='PsychoPass')
             sys.exit()
-        
     def Edit(Variable, Value):
         try:
             with open(JsonPath, 'r') as f:
@@ -53,7 +62,42 @@ class Json:
         except FileNotFoundError:
             sg.popup('Settings File not found.', icon=icon, title='PsychoPass')
             sys.exit
-
+    def DateCheck():
+        CreationDate = Json.Read('CreationDate')
+        if CreationDate is None:
+            sg.popup("Creation Date is not available.", icon=icon, title='PsychoPass')
+            return
+        try:
+            CreationDate = datetime.datetime.strptime(CreationDate, "%Y-%m-%d").date()
+        except ValueError:
+            sg.popup("Invalid date format for Creation Date.", icon=icon, title='PsychoPass')
+            return
+        TargetDate = CreationDate + datetime.timedelta(days=30)
+        CurrentDate = datetime.date.today()
+        
+        if CurrentDate >= TargetDate:
+            sg.popup("Password hasn't been changed in the past 30 days. Please change the password.", icon=icon, title='PsychoPass')
+        else:
+            pass
+    def AutoLogin(check=False, edit=False, enabled=False):
+        if check is True:
+            Data = Json.Read('AutoLogin')
+            Data = Cryptography.Decrypt(Data)
+            return Data
+        if edit is True:
+            if enabled is True:
+                Data = Cryptography.Encrypt('True')
+                Json.Edit('AutoLogin', Data.decode())
+                return 'Enabled'
+            if enabled is False:
+                Data = Cryptography.Encrypt('False')
+                Json.Edit('AutoLogin', Data.decode())
+                return 'Disabled'
+if os.path.exists(JsonPath):
+    Theme = Json.Read('Theme')
+else:
+    Theme = 'SystemDefault'
+sg.theme(Theme)
 class Cryptography:
     def CreateKey():
         key = Fernet.generate_key()
@@ -81,14 +125,16 @@ class Cryptography:
             sg.popup('Encryption Key either Missing or Invalid.\n' + str(e), icon=icon, title='PsychoPass')
             sys.exit()
     def ExternalDecryption(Input, Key):
-        fern = Fernet(Key)
-        data = fern.decrypt(Input)
-        return data
+        try:
+            fern = Fernet(Key)
+            data = fern.decrypt(Input)
+            return data
+        except Exception as e:
+            sg.popup('Error', + str(e), icon=icon, title='PsychoPass')
     def GeneratePassword(MAX_LEN=12):
         chars = string.ascii_letters + string.digits + string.punctuation
         password = ''.join(random.choice(chars) for _ in range(MAX_LEN))
         return password
-
 class TMD:
     def Check():
         tmd1Present = os.path.isfile(tmd1)
@@ -138,28 +184,28 @@ class TMD:
             '''
                 return data
             except Exception as e:
-                sg.popup('Error:' + str(e))
+                sg.popup('Error:' + str(e), icon=icon, title='PsychoPass')
     def Import(file_path, key_path):
         try:
-            LineVariables = {}
-            DecryptedLines = []
-            with open(key_path) as k:
-                key = k.read()
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-            for i, line in enumerate(lines):
-                VariableName = f'line{i + 1}'
-                LineVariables[VariableName] = line.strip()
-                DecryptedLine = Cryptography.ExternalDecryption(LineVariables[VariableName], key)
-                DecryptedLines.append(DecryptedLine.decode())
-            decrypted_data = '\n\n  ====================================================\n'.join(DecryptedLines)
-            encrypted_data = Cryptography.Encrypt(decrypted_data).decode()
-            with open(tmd2, 'a') as f:
-                f.write(encrypted_data + '\n')
+            with open(file_path) as l:
+                LineVariables = {}
+                DecryptedLines = []
+                with open(key_path) as k:
+                    key = k.read()
+                with open(file_path, 'r') as f:
+                    lines = f.readlines()
+                for i, line in enumerate(lines):
+                    VariableName = f'line{i + 1}'
+                    LineVariables[VariableName] = line.strip()
+                    DecryptedLine = Cryptography.ExternalDecryption(LineVariables[VariableName], key)
+                    DecryptedLines.append(DecryptedLine.decode())
+                decrypted_data = '\n\n  ====================================================\n'.join(DecryptedLines)
+                encrypted_data = Cryptography.Encrypt(decrypted_data).decode()
+                with open(tmd2, 'a') as f:
+                    f.write(encrypted_data + '\n')
+                sg.popup('Successfully Imported', icon=icon, title='PyschoPass')
         except Exception as e:
-            sg.popup('Error: ' + str(e))
-
-
+            sg.popup('Error: ' + str(e), icon=icon, title='PsychoPass')
     def Write(TMD, input, open_type):
         try:
             if open_type == 'a':
@@ -170,6 +216,7 @@ class TMD:
                 with open(TMD, 'w') as f:
                     f.write(input)
                     f.close()
+            sg.popup('Passwords saved successfully!', icon=icon, title='PsychoPass')
         except FileNotFoundError:
             sg.popup('TMD File not found.', icon=icon, title='PsychoPass')
     def Clear(TMD):
@@ -183,26 +230,70 @@ class TMD:
                     f.close()
                     file = 'Passwords Cleared!'
                     return file
+                sg.popup('Passwords Cleared', icon=icon, title='PsychoPass')
         except FileNotFoundError:
             sg.popup('TMD File not found.', icon=icon, title='PsychoPass')
     def Export(tmd, OutPath):
         try:
             shutil.copy(tmd, OutPath)
-            sg.popup('Data Successfully Exported!')
+            sg.popup('Data Successfully Exported!', icon=icon, title='PsychoPass')
         except Exception as e:
-            sg.popup('Error: ' + str(e))
+            sg.popup('Error: ' + str(e), icon=icon, title='PsychoPass')
     def FactoryReset():
         try:
             os.remove(tmd1)
             os.remove(tmd2)
             os.remove(tmd3)
             os.remove(JsonPath)
-            sg.popup('All data has been reset. PsychoPass will now close.', icon=icon, title='PsychoPass', )
+            os.remove(f'{appdata_path}/qrcode.png')
+            sg.popup('All data has been reset. PsychoPass will now close.', icon=icon, title='PsychoPass')
             sys.exit()
         except Exception as e:
-            sg.popup('Error: ' + str(e))
-
+            sg.popup('Error: ' + str(e), icon=icon, title='PsychoPass')
 class Authentication:
+    def get_strength_label(strength):
+        if strength < 0.25:
+            return 'Weak'
+        elif strength < 0.5:
+            return 'Moderate'
+        elif strength < 0.75:
+            return 'Strong'
+        else:
+            return 'Very Strong'
+    def AuthKey(type='Save', Key=''):
+        try:
+            if type == 'Save':
+                Data = Cryptography.Encrypt(Key)
+                Json.Edit('Auth', Data.decode())
+            if type == 'Read':
+                Data = Json.Read('Auth')
+                key = Cryptography.Decrypt(Data)
+                return key
+        except Exception as e:
+            sg.popup('Error: ', + str(e), icon=icon, title='PsychoPass')
+    def CheckQR(key):
+        try:
+            SavedKey = Authentication.AuthKey(type='Read')
+            totp = pyotp.TOTP(SavedKey)
+            generated_code = totp.now()
+            if generated_code == key:
+                return True
+            else:
+                return False
+        except Exception as e:
+            sg.popup('Error: ', + str(e), icon=icon, title='PsychoPass')
+    def CreateQR():
+        try:
+            SecretKey = pyotp.random_base32()
+            KeyPath = Authentication.AuthKey(type='Save', Key=SecretKey)
+            totp = pyotp.TOTP(SecretKey)
+            ProvisioningURI = totp.provisioning_uri(name='PsychoPass', issuer_name='')
+            QRCode = qrcode.make(ProvisioningURI)
+            QRCodeName = f'{appdata_path}/qrcode.png'
+            QRCode.save(QRCodeName)
+            return QRCodeName
+        except Exception as e:
+            sg.popup('Error: ' + str(e), icon=icon, title='PsychoPass') 
     def AuthenticateLogin(input):
         try:
             Credentials = TMD.Read(tmd1)
@@ -214,19 +305,50 @@ class Authentication:
         except FileNotFoundError:
             sg.popup('TMD File not found.', icon=icon, title='PsychoPass')
             sys.exit()
-
-if os.path.exists(JsonPath):
-    Theme = Json.Read('Theme')
-else:
-    Theme = 'SystemDefault'
-
 class PsychoPass:
+    def CheckVer():
+        if not os.path.exists(CurrentVersion):
+            with open(CurrentVersion, 'w') as f:
+                f.write('1.3')
+                f.close()
+        if os.path.exists(CurrentVersion):
+            pass
+    def CheckForUpdate():
+        try:
+            url = f"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest"
+            response = requests.get(url)
+            release = response.json()
+            LatestVersion = release['tag_name']
+            downloadUrl = release['assets'][0]['browser_download_url']
+            return LatestVersion, downloadUrl
+        except requests.exceptions.RequestException:
+            return None, None
+    def Update(download_url):
+        try:
+            response = requests.get(download_url)
+            with open(f'{appdata_path}/update.exe', 'wb') as file:
+                file.write(response.content)
+            layout0 = [[sg.T('Successfully Downloaded Update! Install Now?')], [sg.B('Yes'), sg.B('No')]]
+            window0 = sg.Window('PsychoPass', layout0, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
+            event0, _ = window0.read()
+            if event0 == 'Yes':
+                window0.hide()
+                os.system(f'{appdata_path}/update.exe')
+                os.remove(f'{appdata_path}/update.exe')
+                sys.exit()
+            if event0 == 'No':
+                window0.close()
+                PsychoPass.Options()
+            if event0 == sg.WIN_CLOSED:
+                sys.exit()
+        except requests.exceptions.RequestException as e:
+            sg.popup(f'error: {e}')
     def Authenticate(type=1):
         layout = [
             [sg.Image(logo)],
             [sg.Text('Please Verify Credentials.', font=('Helvetica', 20), size=(20, 1))],
-            [sg.Text('Username:', font=('Helvetica'), size=(10, 1)), sg.Input(key='-USERNAME-', size=(20, 1))],
-            [sg.Text('Password:', font=('Helvetica'), size=(10, 1)), sg.Input(key='-PASSWORD-', size=(20, 1))],
+            [sg.Text('Username:', size=(10, 1)), sg.Input(key='-USERNAME-', size=(20, 1))],
+            [sg.Text('Password:', size=(10, 1)), sg.Input(key='-PASSWORD-', size=(20, 1), password_char='*')],
             [sg.Button('Login', size=(10, 1)), sg.Button('Back', size=(10, 1))]
         ]
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
@@ -263,8 +385,11 @@ class PsychoPass:
                     if type == 5:
                         window.close()
                         PsychoPass.ImportTMD()
+                    if type == 6:
+                        window.close()
+                        PsychoPass.TwoFactorAuth()
                 if CheckLogin is False:
-                    sg.popup('Invalid Credentials.')
+                    sg.popup('Invalid Credentials.', icon=icon, title='PsychoPass')
                     window.close()
                     PsychoPass.Options()
             if event == 'Back':
@@ -273,13 +398,32 @@ class PsychoPass:
             if event == sg.WIN_CLOSED:
                 sys.exit()
         window.close()
+    def TwoFactorAuth():
+        QRCode = Authentication.CreateQR()
+        layout = [
+            [sg.Image(logo)],
+            [sg.Text('Scan this QR Code in an Authenticator App', font=('Helvetica'))],
+            [sg.Image(QRCode, key='-QR-')],
+            [sg.Button('Regenerate', size=(10,1)), sg.Button('Back', size=(10,1))]
+            ]
+        window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', element_padding=10, use_ttk_buttons=True, ttk_theme=ttk_style)
+        while True:
+            event, values = window.read()
+            if event == 'Regenerate':
+                QRCode = Authentication.CreateQR()
+                window['-QR-'].update(QRCode)
+            if event == 'Back':
+                window.close()
+                PsychoPass.Options()
+            if event == sg.WIN_CLOSED:
+                sys.exit()
     def ImportTMD():
         layout = [
             [sg.Image(logo)],
-            [sg.Text('Please select Passwords and Key files.')],
-            [sg.Text('Passwords'), sg.Input(key='-PASSWORDINPUT-'), sg.FileBrowse(file_types=[('PsychoPass File', '*.pyp')])],
-            [sg.Text('Key'), sg.Input(key='-KEYINPUT-'), sg.FileBrowse(file_types=[('PsychoPass File', '*.pyp')])],
-            [sg.Button('Import'), sg.Button('Back')]
+            [sg.Text('Please select Passwords and Key files.', font=('Helvetica'), size=(30, 1))],
+            [sg.Text('Passwords', size=(10, 1)), sg.Input(key='-PASSWORDINPUT-', size=(30, 1)), sg.FileBrowse(file_types=[('PsychoPass File', '*.pyp')])],
+            [sg.Text('Key', size=(10, 1)), sg.Input(key='-KEYINPUT-', size=(30, 1)), sg.FileBrowse(file_types=[('PsychoPass File', '*.pyp')])],
+            [sg.Button('Import', size=(10, 1)), sg.Button('Back', size=(10, 1))]
             ]
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style)
         while True:
@@ -288,7 +432,6 @@ class PsychoPass:
                 PasswordInput = values['-PASSWORDINPUT-']
                 KeyInput = values['-KEYINPUT-']
                 TMD.Import(PasswordInput, KeyInput)
-                sg.popup('Successfully Imported!')
             if event == 'Back':
                 window.close()
                 PsychoPass.Options()
@@ -299,7 +442,7 @@ class PsychoPass:
         layout = [
             [sg.Image(logo)],
             [sg.Text('Please Select an Output Path.', font=('Helvetica', 15), size=(25, 1))],
-            [sg.Text('Output Path:', font=('Helvetica'), size=(10, 1)), sg.Input(key='-OUTPATH-', size=(30, 1)), sg.SaveAs(file_types=[('PsychoPass File', '*pyp')], initial_folder=f'C:/users/{user}')],
+            [sg.Text('Output Path:', size=(10, 1)), sg.Input(key='-OUTPATH-', size=(30, 1)), sg.SaveAs(file_types=[('PsychoPass File', '*pyp')], initial_folder=f'C:/users/{user}')],
             [sg.Button('Export Data', size=(15, 1)), sg.Button('Back', size=(15, 1))]
             ]
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style)
@@ -322,18 +465,52 @@ class PsychoPass:
                 sys.exit()
         window.close()
     def Options():
-        ThemeOptions = ['Default', 'LightGreen', 'LightBlue', 'LightBrown', 'LightGrey', 'LightPurple', 'DarkBlue', 'DarkBrown', 'DarkGrey', 'DarkPurple', 'Black',]
+        ThemeOptions = ['Default', 'LightGreen', 'LightBlue', 'LightBrown', 'LightGrey', 'LightPurple', 'DarkBlue', 'DarkBrown', 'DarkGrey', 'DarkPurple', 'Black']
+        AutoLogin = Json.AutoLogin(check=True)
+        if os.path.exists(JsonPath):
+            Theme = Json.Read('Theme')
+        else:
+            Theme = 'SystemDefault'
+        Data = 'Enable AutoLogin'
+        if AutoLogin == 'False':
+            Data = 'Enable AutoLogin'
+        if AutoLogin == 'True':
+            Data = 'Disable AutoLogin'
         layout = [
             [sg.Text('Options', font=('Helvetica', 20))],
             [sg.Combo(ThemeOptions, default_value=Theme, key='-THEME-', size=(20, 1)), sg.Button('Set Theme')],
             [sg.Button('Reset Login', size=(15, 1), font=('Helvetica')), sg.Button('Reset Data', size=(15, 1), font=('Helvetica')), sg.Button('Back', size=(15, 1), font=('Helvetica'))],
-            [sg.Button('Import Passwords', size=(15, 1), font=('Helvetica')), sg.Button('Export Passwords', size=(15, 1), font=('Helvetica')), sg.Button('Export Key', size=(15, 1), font=('Helvetica'))]\
+            [sg.Button('Import Passwords', size=(15, 1), font=('Helvetica')), sg.Button('Export Passwords', size=(15, 1), font=('Helvetica')), sg.Button('Export Key', size=(15, 1), font=('Helvetica'))],
+            [sg.Button(Data, size=(15, 1), font=('Helvetica'), key='-AUTOLOGIN-', ), sg.Button('Enable 2FA', size=(15, 1), font=('Helvetica')), sg.Button('Check for Update', size=(15, 1), font=('Helvetica'))]
         ]
-
         window = sg.Window('Options', layout, icon=icon, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style)
-        
         while True:
             event, values = window.read()
+            AutoLogin = Json.AutoLogin(check=True)
+            if event == 'Check for Update':
+                window.close()
+                LatestVersion, DownloadURL = PsychoPass.CheckForUpdate()
+                with open(CurrentVersion) as file:
+                    Version = file.read()
+                if LatestVersion > Version:
+                    ConfirmLayout = [
+                        [sg.Image(logo)],
+                        [sg.Text('Update Avalible, would you like to download the update?', font=('Helvetica', 15))],
+                        [sg.Button('Yes', size=(10, 1)), sg.Button('No', size=(10, 1))]
+                        ]
+                    ConfirmWindow = sg.Window('PsychoPass', ConfirmLayout, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
+                    confirm_event, _ = ConfirmWindow.read()
+                    if confirm_event == 'Yes':
+                        ConfirmWindow.close()
+                        PsychoPass.Update(DownloadURL)
+                    if confirm_event == 'No':
+                        ConfirmWindow.close()
+                        PsychoPass.Options()
+                    if confirm_event == sg.WIN_CLOSED:
+                        sys.exit()
+                else:
+                    sg.popup('PsychoPass is already running the latest version', icon=icon)
+                    PsychoPass.Options()
             if event == 'Reset Login':
                 window.close()
                 PsychoPass.Authenticate(type=2)
@@ -352,16 +529,29 @@ class PsychoPass:
             if event == 'Set Theme':
                 Json.Edit('Theme', values['-THEME-'])
                 sg.theme(values['-THEME-'])
-                sg.popup('Theme Applied!')
+                sg.popup('Theme Applied!', icon=icon, title='PsychoPass')
                 window.close()
                 PsychoPass.Options()
             if event == 'Back':
                 window.close()
                 PsychoPass.MainMenu()
+            if event == 'Enable 2FA':
+                window.close()
+                PsychoPass.Authenticate(type=6)
+            if event == '-AUTOLOGIN-':
+                if AutoLogin == 'False':
+                    Json.AutoLogin(check=False, edit=True, enabled=True)
+                    SendBack = 'Disable AutoLogin'
+                    sg.popup('Auto Login Enabled', icon=icon, title='PsychoPass')
+                    window['-AUTOLOGIN-'].update(SendBack)
+                if AutoLogin == 'True':
+                    Json.AutoLogin(check=False, edit=True, enabled=False)
+                    SendBack = 'Enable AutoLogin'
+                    sg.popup('Auto Login Disabled', icon=icon, title='PsychoPass')
+                    window['-AUTOLOGIN-'].update(SendBack)
             if event == sg.WIN_CLOSED:
                 sys.exit()
         window.close()
-
     def GeneratePassword():
         Password = Cryptography.GeneratePassword(MAX_LEN=12)
         layout = [
@@ -369,14 +559,13 @@ class PsychoPass:
             [sg.Text(Password, key='-PASSWORD-', font=('Helvetica', 16), justification='center')],
             [sg.Text('If you want to change your password, press "Regenerate" below.', font=('Helvetica', 12))],
             [sg.Text('Please enter information associated with the password below.', font=('Helvetica', 12))],
-            [sg.Text('Username', size=(10, 1)), sg.Input(key='-USERNAME-', size=(20, 1))],
-            [sg.Text('Email', size=(10, 1)), sg.Input(key='-EMAIL-', size=(20, 1))],
-            [sg.Text('Website', size=(10, 1)), sg.Input(key='-WEBSITE-', size=(20, 1))],
+            [sg.Checkbox('', default=True, key='-USERSELECT-'), sg.Text('Username', size=(10, 1)), sg.Input(key='-USERNAME-', size=(20, 1))],
+            [sg.Checkbox('', default=True, key='-EMAILSELECT-'), sg.Text('Email', size=(10, 1)), sg.Input(key='-EMAIL-', size=(20, 1))],
+            [sg.Checkbox('', default=True, key='-WEBSELECT-'), sg.Text('Website', size=(10, 1)), sg.Input(key='-WEBSITE-', size=(20, 1))],
             [sg.Text('Password Length', size=(14, 1))],
             [sg.Slider(range=(8, 20), default_value=12, size=(20, 12), orientation='h', key='-LENGTH_SLIDER-', relief='groove')],
             [sg.Button('Save', size=(10, 1)), sg.Button('Regenerate', size=(10, 1)), sg.Button('Back', size=(10, 1))]
         ]
-
         window = sg.Window('Generated Password', layout, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
         while True:
             event, values = window.read()
@@ -385,16 +574,22 @@ class PsychoPass:
                 Password = Cryptography.GeneratePassword(MAX_LEN=max_len)
                 window['-PASSWORD-'].update(Password)
             if event == 'Save':
-                username = values['-USERNAME-']
-                email = values['-EMAIL-']
-                website = values['-WEBSITE-']
-                Data = f"\n\tUsername:  {username}\n\tEmail:          {email}\n\tPassword:   {Password}\n\tWebsite:      {website}"
-                Data = Cryptography.Encrypt(Data)
-                TMD.Write(tmd2, Data.decode() + '\n', open_type='a')
+                username = values['-USERNAME-'] if values['-USERSELECT-'] else ''
+                email = values['-EMAIL-'] if values['-EMAILSELECT-'] else ''
+                website = values['-WEBSITE-'] if values['-WEBSELECT-'] else ''
+                data = ''
+                if username:
+                    data += f"\n\tUsername:   {username}"
+                if email:
+                    data += f"\n\tEmail:          {email}"
+                data +=f"\n\tPassword:          {Password}"
+                if website:
+                    data += f"\n\tWebsite:      {website}"
+                data = Cryptography.Encrypt(data)
+                TMD.Write(tmd2, data.decode() + '\n', open_type='a')
                 window['-USERNAME-'].update('')
                 window['-EMAIL-'].update('')
                 window['-WEBSITE-'].update('')
-                sg.popup('Password saved successfully!', icon=icon, title='PsychoPass')
             if event == 'Back':
                 window.close()
                 PsychoPass.MainMenu()
@@ -405,33 +600,49 @@ class PsychoPass:
         layout = [
             [sg.Image(logo)],
             [sg.Text("Save Passwords Here", font=('Helvetica', 16), justification='center')],
-            [sg.Text('Username', size=(12, 1)), sg.Input(key='-USERNAME-', size=(40, 1))],
-            [sg.Text('Email', size=(12, 1)), sg.Input(key='-EMAIL-', size=(40, 1))],
-            [sg.Text('Password', size=(12, 1)), sg.Input(key='-PASSWORD-', size=(40, 1))],
-            [sg.Text('Website', size=(12, 1)), sg.Input(key='-WEBSITE-', size=(40, 1))],
+            [sg.Checkbox('', default=True, key='-USERSELECT-'), sg.Text('Username', size=(12, 1)), sg.Input(key='-USERNAME-', size=(40, 1))],
+            [sg.Checkbox('', default=True, key='-EMAILSELECT-'), sg.Text('Email', size=(12, 1)), sg.Input(key='-EMAIL-', size=(40, 1))],
+            [sg.Checkbox('', default=True, key='-PASSSELECT-'), sg.Text('Password', size=(12, 1)), sg.Input(key='-PASSWORD-', size=(40, 1), enable_events=True)],
+            [sg.Checkbox('', default=True, key='-WEBSELECT-'), sg.Text('Website', size=(12, 1)), sg.Input(key='-WEBSITE-', size=(40, 1))],
+            [sg.Text('Password Strength:', size=(15, 1)), sg.Text('', size=(20, 1), key='-STRENGTH-')],
             [sg.Button('Save', size=(10, 1)), sg.Button('Generate', size=(10, 1)), sg.Button('Back', size=(10, 1))]
         ]
-
         window = sg.Window('Save Passwords', layout, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
         while True:
             event, values = window.read()
+            if event == '-PASSWORD-':
+                password = values['-PASSWORD-']
+                if password:
+                    password_stats = PasswordStats(password)
+                    strength = password_stats.strength()
+                else:
+                    strength = 0
+                strength_label = Authentication.get_strength_label(strength)
+                window['-STRENGTH-'].update(strength_label)
             if event == 'Generate':
                 window.close()
                 PsychoPass.GeneratePassword()
             if event == 'Back':
                 window.close()
                 PsychoPass.MainMenu()
-            if event == sg.WIN_CLOSED:
+            if event == sg.WINDOW_CLOSED:
                 sys.exit()
             if event == 'Save':
-                username = values['-USERNAME-']
-                email = values['-EMAIL-']
-                password = values['-PASSWORD-']
-                website = values['-WEBSITE-']
-                Data = f"\n\tUsername:  {username}\n\tEmail:          {email}\n\tPassword:   {password}\n\tWebsite:      {website}"
-                Data = Cryptography.Encrypt(Data)
-                TMD.Write(tmd2, Data.decode() + '\n', open_type='a')
-                sg.popup('Passwords saved successfully!', icon=icon, title='PsychoPass')
+                username = values['-USERNAME-'] if values['-USERSELECT-'] else ''
+                email = values['-EMAIL-'] if values['-EMAILSELECT-'] else ''
+                password = values['-PASSWORD-'] if values['-PASSSELECT-'] else ''
+                website = values['-WEBSITE-'] if values['-WEBSELECT-'] else ''
+                data = ''
+                if username:
+                    data += f"\n\tUsername:   {username}"
+                if email:
+                    data += f"\n\tEmail:          {email}"
+                if password:
+                    data += f"\n\tPassword:   {password}"
+                if website:
+                    data += f"\n\tWebsite:      {website}"
+                data = Cryptography.Encrypt(data)
+                TMD.Write(tmd2, data.decode() + '\n', open_type='a')
                 window['-USERNAME-'].update('')
                 window['-EMAIL-'].update('')
                 window['-PASSWORD-'].update('')
@@ -448,7 +659,7 @@ class PsychoPass:
         layout = [
             [sg.Image(logo)],
             [sg.Text('PyschoPass Menu', font=('Helvetica', 16, 'bold'))],
-            [sg.Multiline(Data, size=(55, 30), key='-MULTILINE-', disabled=False, autoscroll=True, font=('Helvetica', 12))],
+            [sg.Multiline(Data, size=(55, 30), key='-MULTILINE-', disabled=True, autoscroll=False, font=('Helvetica', 12))],
             [sg.Button('Save Passwords', size=(15, 1)), sg.Button('Options', size=(15, 1)), sg.Button('Clear Passwords', size=(15, 1)), sg.Button('Close', size=(15, 1))]
         ]
         window = sg.Window('PsychoPass', layout, icon=icon, margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style, finalize=True)
@@ -463,7 +674,7 @@ class PsychoPass:
                 window['-MULTILINE-'].update(Data)
                 window.un_hide()
             if event == 'Clear Passwords':
-                sg.popup(TMD.Clear(tmd2), icon=icon, title='PsychoPass')
+                TMD.Clear(tmd2)
                 Data = ''
                 window['-MULTILINE-'].update(Data)
             if event == sg.WIN_CLOSED or event == 'Close':
@@ -473,15 +684,27 @@ class PsychoPass:
         layout = [
             [sg.Text('PsychoPass Login Creation', size=(24, 1), font=('Helvetica', 20), justification='center')],
             [sg.Text('Username:', size=(12, 1), font=('Helvetica', 12)), sg.Input(key='-USERNAME-', size=(20, 1), font=('Helvetica', 12))],
-            [sg.Text('Password:', size=(12, 1), font=('Helvetica', 12)), sg.Input(key='-PASSWORD-', size=(20, 1), font=('Helvetica', 12), password_char='*')],
+            [sg.Text('Password:', size=(12, 1), font=('Helvetica', 12)), sg.Input(key='-PASSWORD-', size=(20, 1), font=('Helvetica', 12), password_char='*', enable_events=True)],
+            [sg.Text('Password Strength:', size=(15, 1)), sg.Text('', size=(20, 1), key='-STRENGTH-')],
             [sg.Button('Create Account', size=(15, 1), font=('Helvetica', 12)), sg.Button('Back', size=(15, 1), font=('Helvetica', 12))]
         ]
+        multiline = window['-MULTILINE-'].Widget
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style)
         while True:
             event, values = window.read()
+            if event == '-PASSWORD-':
+                password = values['-PASSWORD-']
+                if password:
+                    password_stats = PasswordStats(password)
+                    strength = password_stats.strength()
+                else:
+                    strength = 0
+                strength_label = Authentication.get_strength_label(strength)
+                window['-STRENGTH-'].update(strength_label)
             if event == 'Create Account':
                 Credentials = values['-USERNAME-'] + values['-PASSWORD-']
                 Credentials = Cryptography.Encrypt(Credentials)
+                Json.Edit('CreationDate', str(CurrentDate))
                 if type == 1:
                     TMD.Write(tmd1, Credentials.decode(), open_type='w')
                     sg.popup('Account Created!', icon=icon, title='PsychoPass')
@@ -503,6 +726,29 @@ class PsychoPass:
             if event == sg.WIN_CLOSED:
                 sys.exit()
         window.close()
+    def ForgotPassword():
+        layout = [
+            [sg.Image(logo)],
+            [sg.Text('Please enter the code provided by your Authentication App below:', font=('Helvetica'))],
+            [sg.Text('Pin', size=(4,1)), sg.Input(key='-KEY-')],
+            [sg.Button('Reset Password', size=(14,1)), sg.Button('Back', size=(14,1))]
+            ]
+        window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style)
+        while True:
+            event, values = window.read()
+            if event == 'Reset Password':
+                Auth = Authentication.CheckQR(values['-KEY-'])
+                if Auth is True:
+                    window.close()
+                    PsychoPass.CreateAccount(type=2)
+                else:
+                    sg.popup('Incorrect Code.', icon=icon, title='PsychoPass')
+            if event == 'Back':
+                window.close()
+                PsychoPass.Login(Theme)
+            if event == sg.WIN_CLOSED:
+                sys.exit()
+        window.close()
     def Login(theme):
         sg.theme(theme)
         layout = [
@@ -510,11 +756,17 @@ class PsychoPass:
             [sg.Text('PsychoPass Login', size=(20, 1), font=('Helvetica', 20), justification='center')],
             [sg.Text('Username:', size=(12, 1), font=('Helvetica', 12)), sg.Input(key='-USERNAME-', size=(20, 1), font=('Helvetica', 12))],
             [sg.Text('Password:', size=(12, 1), font=('Helvetica', 12)), sg.Input(key='-PASSWORD-', size=(20, 1), font=('Helvetica', 12), password_char='*')],
-            [sg.Button('Login', size=(15, 1), font=('Helvetica', 12)), sg.Button('Create Account', size=(15, 1), font=('Helvetica', 12))]
+            [sg.Button('Login', size=(15, 1), font=('Helvetica', 12)), sg.Button('Create Account', size=(15, 1), font=('Helvetica', 12)), sg.Button('Forgot Password', size=(15, 1), font=('Helvetica', 12))]
         ]
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', margins=(20, 20), use_ttk_buttons=True, ttk_theme=ttk_style)
         while True:
             event, values = window.read()
+            if event == 'Forgot Password':
+                if os.path.exists(f'{appdata_path}/qrcode.png'):
+                    window.close()
+                    PsychoPass.ForgotPassword()
+                else:
+                    sg.popup('2 Factor Authentication not enabled.', icon=icon, title='PsychoPass')
             if event == 'Login':
                 if os.path.getsize(tmd1) == 0:
                     sg.popup('Please Create Account.', icon=icon, title='PsychoPass')
@@ -535,10 +787,20 @@ class PsychoPass:
             if event == sg.WIN_CLOSED:
                 sys.exit()
         window.close()
-
-try:
-    Json.PreLaunch()
-    TMD.Check()
-    PsychoPass.Login(Theme)
-except Exception as e:
-    sg.PopupScrolled('Error: \n' + str(e))
+TMD.Check()
+Json.PreLaunch()
+Json.DateCheck()
+PsychoPass.CheckVer()
+AutoLogin = Json.AutoLogin(check=True)
+if AutoLogin == 'True':
+    try:
+        PsychoPass.MainMenu()
+    except Exception as e:
+        print('Error: ' + str(e))
+        sg.PopupScrolled('Error: \n' + str(e), icon=icon, title='PsychoPass')
+if AutoLogin == 'False':
+    try:
+        PsychoPass.Login(Theme)
+    except Exception as e:
+        print('Error: ' + str(e))
+        sg.PopupScrolled('Error: \n' + str(e), icon=icon, title='PsychoPass')
