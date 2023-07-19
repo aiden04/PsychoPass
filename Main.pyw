@@ -313,7 +313,7 @@ class PsychoPass:
     def CheckVer():
         if not os.path.exists(CurrentVersion):
             with open(CurrentVersion, 'w') as f:
-                f.write('1.3')
+                f.write('1.3.1')
                 f.close()
         if os.path.exists(CurrentVersion):
             pass
@@ -329,6 +329,9 @@ class PsychoPass:
             return None, None
     def Update(download_url):
         try:
+            with open(CurrentVersion) as f:
+                f.truncate(0)
+                f.write('1.3.1')
             response = requests.get(download_url)
             with open(f'{appdata_path}/update.exe', 'wb') as file:
                 file.write(response.content)            
