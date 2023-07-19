@@ -10,6 +10,7 @@ import qrcode
 import datetime
 import PySimpleGUI as sg
 import requests
+import subprocess
 from cryptography.fernet import Fernet
 from password_strength import PasswordStats
 appdata_path = os.path.join(os.environ['LOCALAPPDATA'], 'PsychoPass')
@@ -245,7 +246,10 @@ class TMD:
             os.remove(tmd2)
             os.remove(tmd3)
             os.remove(JsonPath)
-            os.remove(f'{appdata_path}/qrcode.png')
+            if os.path.exists(f'{appdata_path}/qrcode.png'):
+                os.remove(f'{appdata_path}/qrcode.png')
+            if not os.path.exists(f'{appdata_path}/qrcode.png'):
+                pass
             sg.popup('All data has been reset. PsychoPass will now close.', icon=icon, title='PsychoPass')
             sys.exit()
         except Exception as e:
@@ -327,20 +331,25 @@ class PsychoPass:
         try:
             response = requests.get(download_url)
             with open(f'{appdata_path}/update.exe', 'wb') as file:
-                file.write(response.content)
+                file.write(response.content)            
             layout0 = [[sg.T('Successfully Downloaded Update! Install Now?')], [sg.B('Yes'), sg.B('No')]]
             window0 = sg.Window('PsychoPass', layout0, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
             event0, _ = window0.read()
             if event0 == 'Yes':
                 window0.hide()
-                os.system(f'{appdata_path}/update.exe')
-                os.remove(f'{appdata_path}/update.exe')
+                with open(f'{appdata_path}/update.bat', 'w') as file:
+                    file.write(f'start "" "{appdata_path}/update.exe"\n')
+                    file.write('exit\n')
+                window0.close()
+                sg.popup('Program will be closed for update.', icon=icon, title='PsychoPass')
+                sg.popup_auto_close('Installing update...', auto_close_duration=3000, non_blocking=True)
+                subprocess.Popen(f'{appdata_path}/update.bat', shell=True)
                 sys.exit()
             if event0 == 'No':
                 window0.close()
-                PsychoPass.Options()
+                PsychoPass.Options()               
             if event0 == sg.WIN_CLOSED:
-                sys.exit()
+                sys.exit()       
         except requests.exceptions.RequestException as e:
             sg.popup(f'error: {e}')
     def Authenticate(type=1):
@@ -780,7 +789,7 @@ class PsychoPass:
             if event == 'Create Account':
                 if os.path.getsize(tmd1) == 0:
                     window.close()
-                    PsychoPass.CreateAccount()
+                    PsychoPass.CreateAccount(type=1)
                 if os.path.getsize(tmd1) > 0:
                     sg.popup('Account Already Created.', icon=icon, title='PsychoPass')
             if event == sg.WIN_CLOSED:
