@@ -21,7 +21,8 @@ JsonPath = f'{appdata_path}/settings.json'
 if len(sys.argv) > 1:
     file_path = sys.argv[1]
 else:
-    sg.popup('Invalid File Path.')
+    sg.popup('Invalid File Path.', icon=icon, title='PsychoPass')
+    sys.exit()
 
 class Json:
         def Read(Variable):
@@ -92,7 +93,7 @@ class TMD:
             '''
                 return data
             except Exception as e:
-                sg.popup('Error:' + str(e))
+                sg.popup('Error:' + str(e), icon=icon, title='PsychoPass')
     def Import(key_path):
         try:
             LineVariables = {}
@@ -112,8 +113,9 @@ class TMD:
             print(f'Encrypted: {encrypted_data}')
             with open(tmd2, 'a') as f:
                 f.write(encrypted_data + '\n')
+            sg.popup('Successfully Imported!', icon=icon, title='PsychoPass')
         except Exception as e:
-            sg.popup('Error: ' + str(e))
+            sg.popup('Error: ' + str(e), icon=icon, title='PsychoPass')
 
 class Authentication:
     def AuthenticateLogin(input):
@@ -128,18 +130,13 @@ class Authentication:
             sg.popup('TMD File not found.', icon=icon, title='PsychoPass')
             sys.exit()
 
-if os.path.exists(JsonPath):
-    Theme = Json.Read('Theme')
-else:
-    Theme = 'SystemDefault'
-
 class PsychoPass:
     def Authenticate(type=1):
         layout = [
             [sg.Image(logo)],
             [sg.Text('Please Verify Credentials.', font=('Helvetica', 20), size=(20, 1))],
             [sg.Text('Username:', font=('Helvetica'), size=(10, 1)), sg.Input(key='-USERNAME-', size=(20, 1))],
-            [sg.Text('Password:', font=('Helvetica'), size=(10, 1)), sg.Input(key='-PASSWORD-', size=(20, 1))],
+            [sg.Text('Password:', font=('Helvetica'), size=(10, 1)), sg.Input(key='-PASSWORD-', size=(20, 1), password_char="*")],
             [sg.Button('Login', size=(10, 1)), sg.Button('Close', size=(10, 1))]
         ]
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', margins=(10, 10), use_ttk_buttons=True, ttk_theme=ttk_style)
@@ -177,7 +174,7 @@ class PsychoPass:
                         window.close()
                         PsychoPass.ImportTMD()
                 if CheckLogin is False:
-                    sg.popup('Invalid Credentials.')
+                    sg.popup('Invalid Credentials.', icon=icon, title='PsychoPass')
             if event == sg.WIN_CLOSED or event == 'Close':
                 sys.exit()
         window.close()
@@ -185,9 +182,9 @@ class PsychoPass:
         layout = [
             [sg.Image(logo)],
             [sg.Text('Please select Key file.')],
-            [sg.Text(f'Selected Path: {file_path}')],
-            [sg.Text('Key'), sg.Input(key='-KEYINPUT-'), sg.FileBrowse(file_types=[('PsychoPass File', '*.pyp')])],
-            [sg.Button('Import'), sg.Button('Close')]
+            [sg.Text(f'Selected Path: {file_path}', font=('Helvetica'))],
+            [sg.Text('Key', size=(10, 1)), sg.Input(key='-KEYINPUT-', size=(30, 1)), sg.FileBrowse(file_types=[('PsychoPass File', '*.pyp')])],
+            [sg.Button('Import', size=(10, 1)), sg.Button('Close', size=(10, 1))]
             ]
         window = sg.Window('PsychoPass', layout, icon=icon, element_justification='center', use_ttk_buttons=True, ttk_theme=ttk_style)
         while True:
@@ -195,11 +192,11 @@ class PsychoPass:
             if event == 'Import':
                 KeyInput = values['-KEYINPUT-']
                 TMD.Import(KeyInput)
-                sg.popup('Successfully Imported!')
             if event == 'Close':
                 sys.exit()
             if event == sg.WIN_CLOSED:
                 sys.exit()
         window.close()
-
+Theme = Json.Read('Theme')
+sg.theme(Theme)
 PsychoPass.Authenticate(type=5)
