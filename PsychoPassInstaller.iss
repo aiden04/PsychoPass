@@ -1,5 +1,5 @@
 #define MyAppName "PsychoPass"
-#define MyAppVersion "1.3"
+#define MyAppVersion "1.3.1"
 #define MyAppURL "https://www.github.com/aiden04/psychopass"
 #define MySupportURL "https://github.com/aiden04/PsychoPass/issues"
 #define MyUpdatesURL "https://github.com/aiden04/PsychoPass/releases"
