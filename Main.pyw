@@ -327,11 +327,11 @@ class PsychoPass:
             return LatestVersion, downloadUrl
         except requests.exceptions.RequestException:
             return None, None
-    def Update(download_url):
+    def Update(download_url, Version):
         try:
             with open(CurrentVersion, 'w') as f:
                 f.truncate(0)
-                f.write('1.3.1')
+                f.write(Version)
             response = requests.get(download_url)
             with open(f'{appdata_path}/update.exe', 'wb') as file:
                 file.write(response.content)            
@@ -514,7 +514,7 @@ class PsychoPass:
                     confirm_event, _ = ConfirmWindow.read()
                     if confirm_event == 'Yes':
                         ConfirmWindow.close()
-                        PsychoPass.Update(DownloadURL)
+                        PsychoPass.Update(DownloadURL, LatestVersion)
                     if confirm_event == 'No':
                         ConfirmWindow.close()
                         PsychoPass.Options()
