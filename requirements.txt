@@ -2,3 +2,5 @@ requests
 cryptography
 sqlite3
 PySimpleGUI
+qrcode
+pyotp
