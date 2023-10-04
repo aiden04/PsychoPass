@@ -20,20 +20,15 @@ The PsychoPass program relies on the following dependencies:
 - Python 3.6 or above
 - PySimpleGUI library
 - Cryptography library
+## Login
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/db2c74e7-de67-4dcd-b129-6f15411d282a)
 
-## Media
-### Login
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/3149863b-80a9-47fc-b31a-6b6da0b1c9bd)
-### Login Creation
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/4ac5cb2b-2f18-4eee-98e6-ccab189b2298)
-### Main Menu
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/5aabc121-b5d5-4f5b-9bd7-a88541df2e20)
-### Password Saver
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/7c690559-f5ce-4751-bb84-a8490701bae9)
-### Password Generator
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/54e0824e-e1c6-447e-8ae0-657c14a32547)
-### Options
-![image](https://github.com/aiden04/PsychoPass/assets/9298623/d82f02b6-3677-414f-8a21-7be96fc9f22c)
+## Main Menu
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/231725b9-edfe-42a5-aec6-48ea25b37f97)
+
+## Passwords Menu
+![image](https://github.com/aiden04/PsychoPass/assets/9298623/d3592463-97fa-4d10-a123-df79c592a63e)
+
 
 ## Build
 If you want to build this into an executable from the source code, follow instructions below:
@@ -42,8 +37,7 @@ Open a new windows terminal where you want then enter these commands.
 git clone https://github.com/aiden04/PsychoPass.git
 cd PsychoPass
 pip install -r requirements.txt
-pyinstaller --onefile --icon icon.ico fileImport.pyw
-pyinstaller --icon icon.ico Main.pyw
+pyinstaller --onefile --icon icon.ico main.py psychopass.py utils.py
 ```
 Once you've done the steps above, copy `icon.ico`, `logo.png`, and open the new `Dist` folder inside the root. You can paste the files in the `Dist` folder, then just move all files into the `Main` directory. And thats it, you've compiled PsychoPass.
 If you would want to go further and compile the installer for on click file support for `.pyp`, that you will need to download the [Inno Installer](https://jrsoftware.org/isdl.php). After you've installed inno, you can just right click the `PsychoPassInstaller.iss` and click compile. After that a the file will compile and create an installer.
