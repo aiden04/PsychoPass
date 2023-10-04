@@ -1,7 +1,5 @@
 from cryptography.fernet import Fernet
 import base64, sqlite3
-import colorama
-from colorama import Fore, Style
 
 class Cipher:
     def __init__(self, db_path, verbose=False):
