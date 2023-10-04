@@ -17,6 +17,28 @@ class PsychoPass:
         else:
             self.main()
 
+    def options(self):
+        layout = [
+            [sg.Image(self.logo)],
+            [sg.Text("Options", font=("Helvetica", 25))],
+            [sg.Button("Change Password"), sg.Button("Change Username"), sg.Button("Change Database Path"), sg.Button("Back")]
+        ]
+        window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style)
+        while True:
+            event, values = window.read()
+            if event == sg.WIN_CLOSED:
+                sys.exit()
+            elif event == "Back":
+                window.close()
+                self.home()
+            elif event == "Change Password":
+                if self.verbose is True: print("Work In Progress.")
+            elif event == "Change Username":
+                if self.verbose is True: print("Work In Progress.")
+            elif event == "Change Database Path":
+                if self.verbose is True: print("Work In Progress.")
+        window.close()
+
     def main(self):
         layout = [
             [sg.Image(self.logo)],
@@ -82,7 +104,7 @@ class PsychoPass:
         ]
         window = sg.Window("PsychoPass", layout, element_padding=5, use_ttk_buttons=True, ttk_theme=self.ttk_style)
         while True:
-            event, values = window.read(timeout=1000)  # Add timeout parameter
+            event, values = window.read(timeout=1000)
             if event == sg.WIN_CLOSED:
                 break
             if event == "Passwords":
@@ -91,6 +113,9 @@ class PsychoPass:
             if event == "Logout":
                 window.close()
                 self.main()
+            if event == "Settings":
+                window.close()
+                self.options()
             elif event == "-LINK-":
                 webbrowser.open_new_tab("https://github.com/aiden04/PsychoPass")
             window["-TIME-"].update(time.strftime("%m/%d/%Y %H:%M:%S"))
@@ -106,7 +131,7 @@ class PsychoPass:
         start_index = int * max_frames_per_page
         end_index = min(start_index + max_frames_per_page, num_frames)
         frames_to_display = cells[start_index:end_index]
-        layout = [[sg.Text("PsychoPass", font=("Helvetica", 25))]]
+        layout = [[sg.Image(self.logo)], [sg.Text("Passwords", font=("Helvetica", 25))]]
         for i in range(num_rows):
             row = []
             for j in range(num_columns):
