@@ -8,6 +8,9 @@ class PsychoPass:
         self.db_path = db_path
         self.Cipher = Cipher(db_path, verbose=self.verbose)
         self.ttk_style = "clam"
+        sg.SetGlobalIcon(f"{os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), 'assets/icon.ico'))}")
+        sg.theme("SystemDefault")
+        self.logo = f"{os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), 'assets/logo.png'))}"
         self.debug = sg.show_debugger_window()
         if self.Cipher.SQLite.checkTable("users") is False:
             self.register()
@@ -16,7 +19,7 @@ class PsychoPass:
 
     def main(self):
         layout = [
-            [sg.Text("PsychoPass", font=("Helvetica", 25))],
+            [sg.Image(self.logo)],
             [sg.Text("Username: "), sg.InputText(key="username")],
             [sg.Text("Password: "), sg.InputText(key="password", password_char="*")],
             [sg.Button("Login"), sg.Button("Register")]
@@ -40,7 +43,7 @@ class PsychoPass:
 
     def register(self):
         layout = [
-            [sg.Text("PsychoPass", font=("Helvetica", 25))],
+            [sg.Image(self.logo)],
             [sg.Text("Username: "), sg.InputText(key="username")],
             [sg.Text("Password: "), sg.InputText(key="password", password_char="*")],
             [sg.Button("Register"), sg.Button("Cancel")]
@@ -60,27 +63,24 @@ class PsychoPass:
 
     def home(self):
         layout = [
-            [
-                sg.Column([
-                    [sg.Text("DataBase Path: ", font=("Helvetica", 10), pad=5)],
-                    [sg.Text(self.db_path, font=("Helvetica", 10), pad=5)]
-                ], justification="center", element_justification="center")
-            ],
+            [sg.Column([[sg.Image(self.logo)]], justification="center", element_justification="center")],
             [
                 sg.Column([
                     [sg.Button("Passwords", size=(10, 1))],
                     [sg.Button("Settings", size=(10, 1))],
                     [sg.Button("Logout", size=(10, 1))]
-                ], justification="left", element_justification="left"),
+                ], justification="left"),
                 sg.Column([
                     [sg.Text("Logged in as: {}".format(self.Cipher.decrypt(self.Cipher.SQLite.getUsername())), font=("Helvetica", 10))],
                     [sg.Text(time.strftime("%m/%d/%Y %H:%M:%S"), font=("Helvetica", 10), key="-TIME-")],
+                    [sg.Text("DataBase Path:", font=("Helvetica", 10))],
+                    [sg.Text(self.db_path, font=("Helvetica", 10), pad=5)],
                     [sg.Text("{} Passwords Saved".format(len(self.Cipher.SQLite.countCellTables())), font=("Helvetica", 10))],
                     [sg.Text("About", font=("Helvetica", 10), text_color="blue", enable_events=True, key="-LINK-")],
-                ], justification="center", element_justification="center", pad=5)
+                ], justification="center", element_justification="center", expand_x=1)
             ]
         ]
-        window = sg.Window("PsychoPass", layout, element_justification="center", element_padding=5, use_ttk_buttons=True, ttk_theme=self.ttk_style)
+        window = sg.Window("PsychoPass", layout, element_padding=5, use_ttk_buttons=True, ttk_theme=self.ttk_style)
         while True:
             event, values = window.read(timeout=1000)  # Add timeout parameter
             if event == sg.WIN_CLOSED:
@@ -123,11 +123,11 @@ class PsychoPass:
                                 [sg.Text(f"Password: {self.Cipher.decrypt(password)}", justification="left")],
                                 [sg.Text(f"Email: {self.Cipher.decrypt(email)}", justification="left")],
                                 [
-                                    sg.Text("Website:", text_color="white"),
+                                    sg.Text("Website:", justification="left"),
                                     sg.Text(website_text, text_color="blue", justification="left", enable_events=True, key=f"link{cell_num}")
                                 ],
                                 [sg.Button(f"Edit", key=f"edit{cell_num}", size=(8, 1)), sg.Button(f"Delete", key=f"delete{cell_num}", size=(8, 1))]
-                            ], size=(250, 165), key=f"frame{cell_num}", element_justification="center", pad=10)
+                            ], size=(250, 165), key=f"frame{cell_num}", element_justification="center", pad=10, relief="solid")
                         )
                     else:
                         row.append(
@@ -136,11 +136,11 @@ class PsychoPass:
                                 [sg.Text("Password: **********", justification="left")],
                                 [sg.Text(f"Email: {self.Cipher.decrypt(email)}", justification="left")],
                                 [
-                                    sg.Text("Website:", text_color="white"),
+                                    sg.Text("Website:", justification="left"),
                                     sg.Text(website_text, text_color="blue", justification="left", enable_events=True, key=f"link{cell_num}")
                                 ],
                                 [sg.Button(f"Edit", key=f"edit{cell_num}", size=(8, 1)), sg.Button(f"Delete", key=f"delete{cell_num}", size=(8, 1))]
-                            ], size=(250, 165), key=f"frame{cell_num}", element_justification="center", pad=10)
+                            ], size=(250, 165), key=f"frame{cell_num}", element_justification="center", pad=10, relief="solid")
                     )
                 else:
                     pass
@@ -168,18 +168,17 @@ class PsychoPass:
                 window.close()
                 self.passwordMenu(int=int+1, show_passwords=show_passwords)
             elif event == "Add Password":
-                window.hide()
+                window.close()
                 self.addPassword()
-                window.un_hide()
+                self.passwordMenu(int=int, show_passwords=show_passwords)
             elif event == "Home":
                 window.close()
                 self.home()
             elif event == "Search":
                 query = values["query"]
                 if query:
-                    window.hide()
-                    self.search(query)
-                    window.un_hide()
+                    window.close()
+                    self.search(query, show_passwords=show_passwords)
             elif event == "Clear Passwords":
                 popup = sg.popup("Are you sure you want to clear all passwords?", title="Clear Passwords", custom_text=("Yes", "No"))
                 if popup == "Yes":
@@ -248,7 +247,7 @@ class PsychoPass:
                                     sg.Text(website, text_color="blue", justification="left", enable_events=True, key=f"link{cell}")
                                 ],
                                 [sg.Button(f"Edit", key=f"edit{cell}", size=(8, 1)), sg.Button(f"Delete", key=f"delete{cell}", size=(8, 1))]
-                            ], size=(250, 165), element_justification="center", pad=10)
+                            ], size=(250, 165), element_justification="center", pad=10, relief="solid")
                         )
                     else:
                         cell, platform, username, password, email, website = cell[0], cell[1], cell[2], cell[3], cell[4], cell[5]
@@ -262,7 +261,7 @@ class PsychoPass:
                                     sg.Text(website, text_color="blue", justification="left", enable_events=True, key=f"link{cell}")
                                 ],
                                 [sg.Button(f"Edit", key=f"edit{cell}", size=(8, 1)), sg.Button(f"Delete", key=f"delete{cell}", size=(8, 1))]
-                            ], size=(250, 165), element_justification="center", pad=10)
+                            ], size=(250, 165), element_justification="center", pad=10, relief="solid")
                         )
             layout.append(row)
         if show_passwords is True: button_text = "Hide Passwords"
@@ -272,11 +271,14 @@ class PsychoPass:
         while True:
             event, values = window.read()
             if event == sg.WIN_CLOSED:
-                window.close()
-                break
+                sys.exit()
             elif event == "Back":
-                window.close()
-                self.passwordMenu()
+                if int == 0:
+                    window.close()
+                    self.passwordMenu(show_passwords=show_passwords)
+                else:
+                    window.close()
+                    self.search(query, int=int-1, show_passwords=show_passwords)
             elif event == "password_rotator":
                 if show_passwords is True:
                     window.close()
@@ -285,10 +287,10 @@ class PsychoPass:
                     window.close()
                     self.search(query, int=int, show_passwords=not show_passwords)
             elif event == "Add Password":
-                window.hide()
+                window.close()
                 self.addPassword()
-                window.refresh()
-                window.un_hide()
+                self.search(query, int=int, show_passwords=show_passwords)
+                
             elif event == "Clear Passwords":
                 popup = sg.popup("Are you sure you want to delete all passwords?", title="Clear Passwords", custom_text=("Yes", "No"))
                 if popup == "Yes":
@@ -301,9 +303,9 @@ class PsychoPass:
                     self.search(query)
                 else:
                     pass
-            elif event == "Home":
+            elif event == "Next":
                 window.close()
-                self.home()
+                self.search(query, int=int+1, show_passwords=show_passwords)
             for cell in results:
                 if event == f"delete{cell[0]}":
                     platform = cell[0]
@@ -318,9 +320,9 @@ class PsychoPass:
                     else:
                         pass
                 elif event == f"edit{cell[0]}":
-                    window.hide()
+                    window.close()
                     self.addPassword(cell=cell[0])
-                    window.un_hide()
+                    self.search(query, int=int, show_passwords=show_passwords)
                 elif event == f"link{cell[5]}":
                     print(cell[5])
                     website = self.Cipher.SQLite.readCell(cell)[5]
@@ -367,8 +369,7 @@ class PsychoPass:
                         platform, username, password, email, website = self.Cipher.encrypt(values["platform"]), self.Cipher.encrypt(values["username"]), self.Cipher.encrypt(values["password"]), self.Cipher.encrypt(values["email"]), self.Cipher.encrypt(values["website"])
                         self.Cipher.SQLite.addPassword(platform, username, password, email, website)
                         sg.popup("Password added successfully!")
-                        for key in values:
-                            window.Element(key).Update("")
+                        
                     else:
                         sg.popup("Please fill out all fields!")
         window.close()
