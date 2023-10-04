@@ -1,5 +1,7 @@
 from cryptography.fernet import Fernet
 import base64, sqlite3
+import colorama
+from colorama import Fore, Style
 
 class Cipher:
     def __init__(self, db_path, verbose=False):
@@ -65,11 +67,30 @@ class Cipher:
             else:
                 if self.verbose is True: print("Login failed.")
                 return False
-
+    def queryCells(self, query):
+        if self.verbose is True: print("Querying cells for {}.".format(query))
+        cells = self.SQLite.countCellTables()
+        results = []  # Create a list to store the results
+        for cell in cells:
+            platform, username, password, email, website = self.SQLite.readCell(cell)
+            platform = self.decrypt(platform)
+            username = self.decrypt(username)
+            password = self.decrypt(password)
+            email = self.decrypt(email)
+            website = self.decrypt(website)
+            if query in platform or query in username or query in password or query in email or query in website:
+                if self.verbose is True: print("Found {} in cell{}.".format(query, cell))
+                results.append((cell, platform, username, password, email, website))  # Append the found result to the list
+            else:
+                if self.verbose is True: print("Did not find {} in cell{}.".format(query, cell))
+                continue
+        return results  # Return the list of found results
+    
 class SQLite:
     def __init__(self, db_path, verbose=False):
         self.verbose = verbose
         self.conn = sqlite3.connect(db_path, verbose)
+        if verbose is True: print("Connected to database at {}.".format(db_path))
         self.cur = self.conn.cursor()
 
     def makeCipherTable(self, key):
@@ -105,15 +126,27 @@ class SQLite:
             print("Counting cell tables. . .")
             print("Number of cell tables: ", len(tables))
         return [int(table[0][4:]) for table in tables]
-       
+
     def addPassword(self, platform, username, password, email, website):
-        if self.verbose is True: print("Adding password for platform {} with username {} and password {}.".format(platform, username, password))
         cell = len(self.countCellTables()) + 1
+        while self.checkTable("cell{}".format(cell)):
+            if self.verbose:
+                print("Cell{} already exists. Trying next cell.".format(cell))
+            cell += 1
+        if self.verbose:
+            print("Adding password to cell{} for platform {} with username {} and password {}.".format(cell, platform, username, password))
         self.cur.execute("CREATE TABLE IF NOT EXISTS cell{} (platform TEXT, username TEXT, password TEXT, email TEXT, website TEXT)".format(cell))
         self.cur.execute("INSERT INTO cell{} VALUES (?, ?, ?, ?, ?)".format(cell), (platform, username, password, email, website))
         self.conn.commit()
-        if self.verbose is True: print("Password saved successfully to cell{}.".format(cell))
+        if self.verbose:
+            print("Password saved successfully to cell{}.".format(cell))
     
+    def editPassword(self, cell, platform, username, password, email, website):
+        if self.verbose is True: print("Editing password for platform {} with username {} and password {}.".format(platform, username, password))
+        self.cur.execute("UPDATE cell{} SET platform=?, username=?, password=?, email=?, website=?".format(cell), (platform, username, password, email, website))
+        self.conn.commit()
+        if self.verbose is True: print("Password saved successfully to cell{}.".format(cell))
+
     def readCell(self, cell_num):
         self.cur.execute(f"SELECT platform, username, password, email, website FROM cell{cell_num}")
         platform, username, password, email, website = self.cur.fetchone()
