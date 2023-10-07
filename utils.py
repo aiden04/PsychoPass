@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-import base64, sqlite3
+import base64, sqlite3, random, string, requests, time, sys, os
 
 class Cipher:
     def __init__(self, db_path, verbose=False):
@@ -33,6 +33,18 @@ class Cipher:
             print("Key: ", cipher_key)
         return cipher_key.decode()
     
+    def generatePassword(self, length=16):
+        if self.verbose is True: print("Generating password with length {}.".format(length))
+        low_chars = "abcdefghijklmnopqrstuvwxyz"
+        alpha_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        num_chars = "0123456789"
+        special_chars = "!@#$%^&*()_+-=[]{};:,./<>?"
+        for l in range(length):
+            password = random.choice(low_chars) + random.choice(alpha_chars) + random.choice(num_chars) + random.choice(special_chars)
+            password += ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(length - 4))
+        if self.verbose is True: print("Generated password: ", password)
+        return password
+
     def encrypt(self, plain_text):
         cipher_suite = Fernet(self.key)
         cipher_text = cipher_suite.encrypt(plain_text.encode())
@@ -117,6 +129,12 @@ class SQLite:
             print("Registering user {} with password {}.".format(username, password))
     
 
+    def editUser(self, username, password):
+        self.cur.execute("UPDATE users SET username=?, password=?", (username, password))
+        self.conn.commit()
+        if self.verbose is True:
+            print("Editing user {} with password {}.".format(username, password))
+
     def countCellTables(self):
         self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'cell%'")
         tables = self.cur.fetchall()
@@ -160,3 +178,79 @@ class SQLite:
             print("Retrieving username. . .")
             print("Username: ", username)
         return username
+    
+class Update:
+    def __init__(self, verbose=False):
+        self.verbose = verbose
+        if self.verbose is True: print("Initializing update. . .")
+        self.rep_owner = "aiden04"
+        self.rep_name = "PsychoPass"
+        self.rep_url = f"https://api.github.com/repos/{self.rep_owner}/{self.rep_name}"
+        self.raw_rep_url = f"https://raw.githubusercontent.com/{self.rep_owner}/{self.rep_name}"
+        if self.verbose is True:
+            print("Owner: ", self.rep_owner)
+            print("Repository Name: ", self.rep_name)
+            print("Repository URL: ", self.rep_url)
+    def checkForUpdate(self):
+        if self.verbose is True: print("Checking for update. . .")
+        if self.verbose is True: print("Requests URL: ", f"{self.rep_url}/releases/latest")
+        response = requests.get(f"{self.rep_url}/releases/latest")
+        if response:
+            release = response.json()
+            latest_version = release["tag_name"]
+            if self.verbose is True: print("Latest Version: ", latest_version)
+            if latest_version > "1.2.0":
+                if self.verbose is True: print("Update available.")
+                return True
+            else:
+                if self.verbose is True: print("No update available.")
+                return False
+        else:
+            if self.verbose is True: print("Update information not available.")
+            return False
+    def update(self):
+        if self.verbose is True: print("Updating. . .")
+        time.sleep(1)
+        progress = 0
+        while progress < 100:
+            out_path = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "update"))
+            yield progress + 20
+            if self.verbose is True: print("Output Path: ", out_path)
+            main_url = f"{self.raw_rep_url}/nightly/main.py"
+            psychopass_url = f"{self.raw_rep_url}/nightly/psychopass.py"
+            utils_url = f"{self.raw_rep_url}/nightly/utils.py"
+            ico_url = f"{self.raw_rep_url}/nightly/assets/icon.ico"
+            logo_url = f"{self.raw_rep_url}/nightly/assets/logo.png"
+            progress += 20
+            yield progress
+            time.sleep(1)
+            if self.verbose is True: print("Urls: ", main_url, psychopass_url, utils_url)
+            r_main = requests.get(main_url)
+            r_psychopass = requests.get(psychopass_url)
+            r_utils = requests.get(utils_url)
+            r_ico = requests.get(ico_url)
+            r_logo = requests.get(logo_url)
+            progress += 20
+            yield progress 
+            time.sleep(1)
+            content = [["main.py", r_main], ["psychopass.py", r_psychopass], ["utils.py", r_utils], ["assets/icon.ico", r_ico], ["assets/logo.png", r_logo]]
+            if r_main and r_psychopass and r_utils:
+                if self.verbose is True: print("Successfully requested files.")
+                if not os.path.exists(out_path):
+                    os.makedirs(out_path)
+                    os.makedirs(f"{out_path}/assets")
+                progress += 20
+                yield progress
+                time.sleep(1)
+                for file in content:
+                    if self.verbose is True: print("Writing file {} to {}.".format(file[0], out_path))
+                    with open(os.path.abspath(os.path.join(out_path, file[0])), "wb") as f:
+                        if self.verbose is True: print("File content: ", file[1].content)
+                        f.write(file[1].content)
+                        time.sleep(1)
+                        if self.verbose is True: print("Successfully wrote file {} to {}.".format(file[0], out_path))
+                        progress += 10 
+                        yield progress
+            else:
+                if self.verbose is True: print("Failed to request files.")
+                return
