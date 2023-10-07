@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-import os, time, sys, webbrowser
+import os, time, sys, webbrowser, configparser, shutil, requests
 from utils import *
 
 class PsychoPass:
@@ -17,11 +17,116 @@ class PsychoPass:
         else:
             self.main()
 
+    def authenticate(self, direct=""):
+        self.direct = direct
+        layout = [
+        [sg.Image(self.logo)],
+        [sg.Text("Authenticate", font=("Helvetica", 25))],
+        [sg.Text("Username: ", size=8), sg.Input(key="username")],
+        [sg.Text("Password: ", size=8), sg.Input(key="password", password_char="*")],
+        [sg.Button("Authenticate"), sg.Button("Cancel")]
+        ]
+        window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style)
+        while True:
+            event, values = window.read()
+            if event == "Cancel":
+                break
+            elif event == sg.WIN_CLOSED:
+                sys.exit()
+            elif event == "Authenticate":
+                if self.Cipher.checkLogin(values["username"], values["password"]) is True:
+                    window.close()
+                    self.direct()
+                else:
+                    sg.popup("Authentication failed!")
+        window.close()
+
+    def changeLogin(self):
+        layout = [
+            [sg.Image(self.logo)],
+            [sg.Text("Change Login", font=("Helvetica", 25))],
+            [sg.Text("Username: ", size=16), sg.Input(key="username")],
+            [sg.Text("Password: ", size=16), sg.Input(key="password", password_char="*")],
+            [sg.Text("Re Enter Password: ", size=16), sg.Input(key="password2", password_char="*")],
+            [sg.Button("Change Login"), sg.Button("Cancel")]
+        ]
+        window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style)
+        while True:
+            event, values = window.read()
+            if event == sg.WIN_CLOSED:
+                sys.exit()
+            elif event == "Cancel":
+                window.close()
+                self.options()
+            elif event == "Change Login":
+                if values["password"] == values["password2"]:
+                    username, password = self.Cipher.encrypt(values["username"]), self.Cipher.encrypt(values["password"])
+                    self.Cipher.SQLite.editUser(username, password)
+                    sg.popup("Login changed successfully!")
+                    window.close()
+                    self.options()
+                else:
+                    sg.popup("Passwords do not match!")
+
+    def changeDatabasePath(self):
+        layout = [
+            [sg.Image(self.logo)],
+            [sg.Text("Change Database Path", font=("Helvetica", 25))],
+            [sg.Text("New Database Path: ", size=16), sg.Input(key="db_path"), sg.FileBrowse(file_types=(("Database File", "*.db")), key="db_path_browse")],
+            [sg.Button("Change Database Path"), sg.Button("Cancel")]
+        ]
+        window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style)
+        while True:
+            event, values = window.read()
+            if event == sg.WIN_CLOSED:
+                sys.exit()
+            elif event == "Cancel":
+                window.close()
+                self.options()
+            elif event == "Change Database Path":
+                db_path = values["db_path"]
+                if os.path.isfile(db_path) is False:
+                    if self.verbose is True: print("Database not found")
+                    popup = sg.popup("Database not found! Would you like to copy the current database to the new path?", title="Database Not Found", custom_text=("Yes", "No"))
+                    if popup == "Yes":
+                        if self.verbose is True: print("Copying database to path: {}".format(db_path))
+                        shutil.copyfile(self.db_path, db_path)
+                        config = configparser.ConfigParser()
+                        config.read('config.ini')
+                        config['DEFAULT'] = {'db_path': db_path}
+                        with open('config.ini', 'w') as configfile:
+                            config.write(configfile)
+                        sg.popup("Database path changed successfully!")
+                        window.close()
+                        PsychoPass(db_path=db_path, verbose=self.verbose)
+                    else:
+                        if self.verbose is True: print("Creating new database.")
+                        with open(db_path, "w"):
+                            if self.verbose is True: print("Created new database at: {}.".format(db_path))
+                        config = configparser.ConfigParser()
+                        config.read('config.ini')
+                        config['DEFAULT'] = {'db_path': db_path}
+                        with open('config.ini', 'w') as configfile:
+                            config.write(configfile)
+                        sg.popup("Database path changed successfully!")
+                        window.close()
+                        self.options()
+                else:
+                    if self.verbose is True: print("Database found at: {}".format(db_path))
+                    config = configparser.ConfigParser()
+                    config.read('config.ini')
+                    config['DEFAULT'] = {'db_path': db_path}
+                    with open('config.ini', 'w') as configfile:
+                        config.write(configfile)
+                    sg.popup("Database path changed successfully!")
+                    window.close()
+                    PsychoPass(db_path=db_path, verbose=self.verbose)
+
     def options(self):
         layout = [
             [sg.Image(self.logo)],
             [sg.Text("Options", font=("Helvetica", 25))],
-            [sg.Button("Change Password"), sg.Button("Change Username"), sg.Button("Change Database Path"), sg.Button("Back")]
+            [sg.Button("Change Login"), sg.Button("Change Database Path"), sg.Button("Back")]
         ]
         window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style)
         while True:
@@ -31,19 +136,47 @@ class PsychoPass:
             elif event == "Back":
                 window.close()
                 self.home()
-            elif event == "Change Password":
-                if self.verbose is True: print("Work In Progress.")
-            elif event == "Change Username":
-                if self.verbose is True: print("Work In Progress.")
+            elif event == "Change Login":
+                window.close()
+                self.authenticate(direct=self.changeLogin)
             elif event == "Change Database Path":
-                if self.verbose is True: print("Work In Progress.")
+                window.close()
+                self.authenticate(direct=self.changeDatabasePath)
+        window.close()
+
+    def update(self):
+        layout = [
+            [sg.Image(self.logo)],
+            [sg.Text("Update", font=("Helvetica", 25))],
+            [sg.Text("Checking for Update. . .", font=("Helvetica", 10), key="update_text")],
+            [sg.ProgressBar(100, orientation="h", size=(20, 20), key="progressbar")],
+            [sg.Button("Update"), sg.Button("Cancel")]
+        ]
+        update = Update(verbose=self.verbose)
+        window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style, finalize=True)
+        if update.checkForUpdate() is True:
+            window["update_text"].update("Update available for download!")
+        else:
+            window["update_text"].update("PsychoPass is up to date.")
+        while True:
+            event, values = window.read(timeout=1000)
+            if event == sg.WIN_CLOSED:
+                sys.exit()
+            elif event == "Cancel":
+                window.close()
+                self.home()
+            elif event == "Update":
+                for progress in update.update():
+                    window["progressbar"].update_bar(progress)
+                    window.refresh()
+                sg.popup("Update complete!")
         window.close()
 
     def main(self):
         layout = [
             [sg.Image(self.logo)],
-            [sg.Text("Username: "), sg.InputText(key="username")],
-            [sg.Text("Password: "), sg.InputText(key="password", password_char="*")],
+            [sg.Text("Username: ", size=8), sg.InputText(key="username")],
+            [sg.Text("Password: ", size=8), sg.InputText(key="password", password_char="*")],
             [sg.Button("Login"), sg.Button("Register")]
         ]
         window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style)
@@ -90,6 +223,7 @@ class PsychoPass:
                 sg.Column([
                     [sg.Button("Passwords", size=(10, 1))],
                     [sg.Button("Settings", size=(10, 1))],
+                    [sg.Button("Update", size=(10, 1))],
                     [sg.Button("Logout", size=(10, 1))]
                 ], justification="left"),
                 sg.Column([
@@ -107,6 +241,9 @@ class PsychoPass:
             event, values = window.read(timeout=1000)
             if event == sg.WIN_CLOSED:
                 break
+            elif event == "Update":
+                window.close()
+                self.update()
             if event == "Passwords":
                 window.close()
                 self.passwordMenu()
@@ -359,12 +496,12 @@ class PsychoPass:
         layout = [
             [sg.Text("PsychoPass", font=("Helvetica", 25))],
             [sg.Text("Add Password")],
-            [sg.Text("Platform: "), sg.InputText(key="platform")],
-            [sg.Text("Username: "), sg.InputText(key="username")],
-            [sg.Text("Password: "), sg.InputText(key="password")],
-            [sg.Text("Email: "), sg.InputText(key="email")],
-            [sg.Text("Website: "), sg.InputText(key="website")],
-            [sg.Button("Save Password"), sg.Button("Back")]
+            [sg.Text("Platform: ", size=8), sg.InputText(key="platform")],
+            [sg.Text("Username: ", size=8), sg.InputText(key="username")],
+            [sg.Text("Password: ", size=8), sg.InputText(key="password")],
+            [sg.Text("Email: ", size=8), sg.InputText(key="email")],
+            [sg.Text("Website: ", size=8), sg.InputText(key="website")],
+            [sg.Button("Save Password", size=17), sg.Button("Generate Password", size=17), sg.Button("Back", size=17)]
         ]
         window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style, finalize=True)
         if cell:
@@ -378,6 +515,8 @@ class PsychoPass:
             event, values = window.read()
             if event == sg.WIN_CLOSED:
                 break
+            elif event == "Generate Password":
+                window["password"].update(self.Cipher.generatePassword())
             elif event == "Back":
                 window.close()
             elif event == "Save Password":
@@ -387,6 +526,7 @@ class PsychoPass:
                         self.Cipher.SQLite.editPassword(cell, platform, username, password, email, website)
                         sg.popup("Password edited successfully!")
                         window.close()
+                        self.passwordMenu()
                     else:
                         sg.popup("Please fill out all fields!")
                 else:
@@ -394,7 +534,8 @@ class PsychoPass:
                         platform, username, password, email, website = self.Cipher.encrypt(values["platform"]), self.Cipher.encrypt(values["username"]), self.Cipher.encrypt(values["password"]), self.Cipher.encrypt(values["email"]), self.Cipher.encrypt(values["website"])
                         self.Cipher.SQLite.addPassword(platform, username, password, email, website)
                         sg.popup("Password added successfully!")
-                        
+                        for value in values:
+                            window[value].update("")
                     else:
                         sg.popup("Please fill out all fields!")
         window.close()
