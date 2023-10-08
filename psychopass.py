@@ -144,34 +144,6 @@ class PsychoPass:
                 self.authenticate(direct=self.changeDatabasePath)
         window.close()
 
-    def update(self):
-        layout = [
-            [sg.Image(self.logo)],
-            [sg.Text("Update", font=("Helvetica", 25))],
-            [sg.Text("Checking for Update. . .", font=("Helvetica", 10), key="update_text")],
-            [sg.ProgressBar(100, orientation="h", size=(20, 20), key="progressbar")],
-            [sg.Button("Update"), sg.Button("Cancel")]
-        ]
-        update = Update(verbose=self.verbose)
-        window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style, finalize=True)
-        if update.checkForUpdate() is True:
-            window["update_text"].update("Update available for download!")
-        else:
-            window["update_text"].update("PsychoPass is up to date.")
-        while True:
-            event, values = window.read(timeout=1000)
-            if event == sg.WIN_CLOSED:
-                sys.exit()
-            elif event == "Cancel":
-                window.close()
-                self.home()
-            elif event == "Update":
-                for progress in update.update():
-                    window["progressbar"].update_bar(progress)
-                    window.refresh()
-                sg.popup("Update complete!")
-        window.close()
-
     def main(self):
         layout = [
             [sg.Image(self.logo)],
@@ -242,8 +214,9 @@ class PsychoPass:
             if event == sg.WIN_CLOSED:
                 break
             elif event == "Update":
-                window.close()
+                window.hide()
                 self.update()
+                window.un_hide()
             if event == "Passwords":
                 window.close()
                 self.passwordMenu()
@@ -256,6 +229,56 @@ class PsychoPass:
             elif event == "-LINK-":
                 webbrowser.open_new_tab("https://github.com/aiden04/PsychoPass")
             window["-TIME-"].update(time.strftime("%m/%d/%Y %H:%M:%S"))
+        window.close()
+
+    def update(self):
+        update = Update(verbose=self.verbose)
+        layout = [
+            [sg.Image(self.logo)],
+            [sg.Text("Update", font=("Helvetica", 25))],
+            [sg.Text("Current Version: 1.5.3b", size=16)],
+            [sg.Text("Checking for updates...", key="update_text")],
+            [sg.ProgressBar(100, orientation="h", size=(20, 20), key="progress")],
+            [sg.Button("Update"), sg.Button("Cancel"), sg.Button("Show Console")],
+            [sg.Multiline("", size=(80, 10), key="console", visible=False, enable_events=True, autoscroll=True, reroute_stdout=True, write_only=True)]
+        ]
+        window = sg.Window("PsychoPass", layout, element_justification="center", use_ttk_buttons=True, ttk_theme=self.ttk_style, finalize=True)
+        progress_bar = window["progress"]
+        progress_bar.update_bar(0)
+        console = window["console"]
+        while True:
+            event, values = window.read(timeout=100)
+            if event == sg.WIN_CLOSED:
+                sys.exit()
+            elif window["update_text"].get() == "Checking for updates...":
+                if update.checkForUpdate() is True:
+                    window["update_text"].update("Update Available!")
+                if update.checkForUpdate() is False:
+                    window["update_text"].update("No Update Available.")
+            elif event == "Cancel":
+                window.close()
+                self.home()
+            elif event == "Update":
+                window["Update"].update("Updating")
+                window["Update"].update(disabled=True)
+                progress_thread = threading.Thread(target=update.run_update, args=(window,))
+                progress_thread.start()
+                while progress_thread.is_alive():
+                    event, values = window.read(timeout=100)
+                    if event == sg.WIN_CLOSED:
+                        sys.exit()
+                window["update_text"].update("Update complete!")
+                time.sleep(1)
+                window["update_text"].update("Cleaning up...")
+                update.cleanup()
+                window["update_text"].update("Done!")
+                sg.popup("Update complete! Psychopass must now restart")
+                sys.exit()
+            elif event == "Show Console":
+                console = window["console"]
+                console.update(visible=not console.visible)
+                if console.visible:
+                    console.update(value=console.get())
         window.close()
 
     def passwordMenu(self, int=0, show_passwords=False):
